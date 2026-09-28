@@ -52,7 +52,7 @@ export const DEFAULT_SETTINGS = {
   template: 'cinematic',
   mapStyle: 'streets',
   vehicle: { type: 'motorbike', color: '#E8412C', size: 1 },
-  line: { color: '#E8412C', width: 6, glow: true, showRemaining: true },
+  line: { color: '#E8412C', width: 6, glow: true, showRemaining: true, spotlight: true },
   camera: { mode: 'follow', zoom: 16, pitch: 60, rotate: true },
   duration: 20,
   easing: true,

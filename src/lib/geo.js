@@ -100,6 +100,13 @@ export function formatDistance(m, units = 'km') {
   return km < 100 ? `${km.toFixed(1)} km` : `${Math.round(km)} km`;
 }
 
+export function formatDuration(s) {
+  const mins = Math.round(s / 60);
+  if (mins < 60) return `${mins} min`;
+  const h = Math.floor(mins / 60), m = mins % 60;
+  return m ? `${h}h ${m}m` : `${h}h`;
+}
+
 export function formatTime(s) {
   s = Math.max(0, s);
   const m = Math.floor(s / 60);

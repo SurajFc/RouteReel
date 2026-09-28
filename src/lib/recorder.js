@@ -63,6 +63,21 @@ export function drawHud(ctx, frame, settings, attribution) {
   const pad = 22 * u;
   const hud = settings.hud;
 
+  if (settings.line.spotlight && frame) {
+    ctx.save();
+    ctx.fillStyle = 'rgba(6, 8, 11, 0.22)';
+    ctx.fillRect(0, 0, W, H);
+    const cx = W / 2, cy = H / 2;
+    const inner = Math.min(W, H) * 0.32;
+    const outer = Math.max(W, H) * 0.75;
+    const grad = ctx.createRadialGradient(cx, cy, inner, cx, cy, outer);
+    grad.addColorStop(0, 'rgba(0,0,0,0)');
+    grad.addColorStop(1, 'rgba(0,0,0,0.55)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+    ctx.restore();
+  }
+
   if (hud.show && frame) {
     const title = hud.title.trim();
     if (title) {
