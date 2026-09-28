@@ -3,6 +3,7 @@ import { Stage } from './components/Stage';
 import { Sidebar } from './components/Sidebar';
 import { Tutorial } from './components/Tutorial';
 import { About } from './components/About';
+import { Toasts } from './components/Toasts';
 import { DEFAULT_SETTINGS, SAMPLE_ROUTES, mergeSettings } from './lib/presets';
 import { fetchRoute } from './lib/routing';
 import { buildTrack, autoDriveTime } from './lib/geo';
@@ -51,7 +52,15 @@ export default function App() {
       return 'dark';
     }
   });
+  const [toasts, setToasts] = useState([]);
+  const toastId = useRef(0);
   const stageRef = useRef(null);
+
+  const showToast = useCallback((text) => {
+    const id = ++toastId.current;
+    setToasts((t) => [...t, { id, text }]);
+    setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 2600);
+  }, []);
 
   const closeTutorial = () => {
     setShowTutorial(false);
@@ -213,9 +222,26 @@ export default function App() {
 
   const fileName = settings.hud.title || route?.name || 'route';
 
+  const downloadGPX = () => {
+    const name = `${slug(fileName)}.gpx`;
+    downloadBlob(new Blob([toGPX(route.coords, fileName)], { type: 'application/gpx+xml' }), name);
+    showToast(`Saved ${name}`);
+  };
+
+  const downloadGeoJSON = () => {
+    const name = `${slug(fileName)}.geojson`;
+    downloadBlob(
+      new Blob([JSON.stringify({ type: 'Feature', properties: { name: fileName }, geometry: { type: 'LineString', coordinates: route.coords } })], { type: 'application/geo+json' }),
+      name
+    );
+    showToast(`Saved ${name}`);
+  };
+
   const saveProject = () => {
+    const name = `${slug(fileName)}.routereel.json`;
     const data = { app: 'routereel', version: 1, settings, route, waypoints: waypoints.map(({ label, coord }) => ({ label, coord })) };
-    downloadBlob(new Blob([JSON.stringify(data)], { type: 'application/json' }), `${slug(fileName)}.routereel.json`);
+    downloadBlob(new Blob([JSON.stringify(data)], { type: 'application/json' }), name);
+    showToast(`Saved ${name}`);
   };
 
   const openProject = async (file) => {
@@ -229,6 +255,7 @@ export default function App() {
       setRoute(data.route);
       if (data.waypoints?.length >= 2) setWaypoints(data.waypoints.map((w) => wp(w.label, w.coord)));
       setMessage(null);
+      showToast(`Opened ${data.route?.name || file.name}`);
     } catch {
       setMessage({ kind: 'error', text: 'That project file could not be opened.' });
     }
@@ -296,22 +323,19 @@ export default function App() {
         chooseRoute={chooseRoute}
         onExportVideo={() => stageRef.current.exportVideo()}
         onExportFrame={() => stageRef.current.exportFrame()}
-        onDownloadGPX={() => downloadBlob(new Blob([toGPX(route.coords, fileName)], { type: 'application/gpx+xml' }), `${slug(fileName)}.gpx`)}
-        onDownloadGeoJSON={() =>
-          downloadBlob(
-            new Blob([JSON.stringify({ type: 'Feature', properties: { name: fileName }, geometry: { type: 'LineString', coordinates: route.coords } })], { type: 'application/geo+json' }),
-            `${slug(fileName)}.geojson`
-          )
-        }
+        onDownloadGPX={downloadGPX}
+        onDownloadGeoJSON={downloadGeoJSON}
         onSaveProject={saveProject}
         onOpenProject={openProject}
       />
+      <Toasts toasts={toasts} />
       <Stage
         ref={stageRef}
         settings={settings}
         coords={route?.coords}
         waypoints={waypoints}
         pickMode={pickMode}
+        notify={showToast}
         onPick={onPick}
         fileName={fileName}
       />

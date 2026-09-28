@@ -10,7 +10,7 @@ import { downloadBlob, slug } from '../lib/importers';
 
 const styleOf = (key) => (MAP_STYLES[key] || MAP_STYLES.streets).style;
 
-export const Stage = forwardRef(function Stage({ settings, coords, waypoints, pickMode, onPick, fileName }, ref) {
+export const Stage = forwardRef(function Stage({ settings, coords, waypoints, pickMode, onPick, fileName, notify }, ref) {
   const bodyRef = useRef(null);
   const mapEl = useRef(null);
   const overlayRef = useRef(null);
@@ -267,7 +267,9 @@ export const Stage = forwardRef(function Stage({ settings, coords, waypoints, pi
 
       if (blob) {
         const name = `${slug(fileName)}-${s.aspect.replace(':', 'x')}-${resolution}p`;
-        downloadBlob(blob, `${name}.${blob.ext || FORMATS[format].ext}`);
+        const outName = `${name}.${blob.ext || FORMATS[format].ext}`;
+        downloadBlob(blob, outName);
+        notify?.(`Exported ${outName}`);
       }
     } catch (err) {
       console.error(err);
@@ -287,7 +289,9 @@ export const Stage = forwardRef(function Stage({ settings, coords, waypoints, pi
       const c = compose();
       return new Promise((r) => c.toBlob(r, 'image/png'));
     });
-    downloadBlob(blob, `${slug(fileName)}-frame-${s.resolution}p.png`);
+    const outName = `${slug(fileName)}-frame-${s.resolution}p.png`;
+    downloadBlob(blob, outName);
+    notify?.(`Saved ${outName}`);
   };
 
   useImperativeHandle(ref, () => ({ exportVideo, exportFrame }));
