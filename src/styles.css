@@ -507,9 +507,47 @@ input[type='range'] { accent-color: var(--paint); width: 100%; }
   right: 10px;
   font-size: 20px;
 }
-.tutorial-dots { display: flex; gap: 6px; }
+.tutorial-dots { display: flex; gap: 6px; flex-wrap: wrap; }
 .tutorial-dots .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--kerb); }
 .tutorial-dots .dot.on { background: var(--paint); }
+
+.tour-backdrop { position: fixed; inset: 0; z-index: 150; background: rgba(10, 12, 15, 0.45); }
+.tour-highlight {
+  position: fixed;
+  z-index: 151;
+  border-radius: 10px;
+  border: 2px solid var(--paint);
+  box-shadow: 0 0 0 4px rgba(242, 194, 48, 0.25), 0 0 24px rgba(242, 194, 48, 0.35);
+  pointer-events: none;
+  transition: top 0.15s ease, left 0.15s ease, width 0.15s ease, height 0.15s ease;
+}
+.tutorial-card.positioned {
+  position: fixed;
+  z-index: 152;
+  max-height: calc(100vh - 24px);
+  transition: top 0.15s ease, left 0.15s ease;
+}
+.tutorial-card.pointer-left::before,
+.tutorial-card.pointer-up::before {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+.tutorial-card.pointer-left::before {
+  top: 28px;
+  left: -8px;
+  border-top: 8px solid transparent;
+  border-bottom: 8px solid transparent;
+  border-right: 8px solid var(--shoulder);
+}
+.tutorial-card.pointer-up::before {
+  top: -8px;
+  right: 28px;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-bottom: 8px solid var(--shoulder);
+}
 
 .about-card h3 { margin: 4px 0 0; font: 600 14px/1.2 var(--cond); text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
 .credits { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
