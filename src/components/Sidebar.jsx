@@ -18,9 +18,9 @@ function exportPlan(s) {
   return { width, height, fps, seconds, bytes: estimateSize(s.format, { width, height, fps, seconds }) };
 }
 
-function Section({ title, children, open = true }) {
+function Section({ title, children, open = true, tour }) {
   return (
-    <details className="section" open={open}>
+    <details className="section" data-tour={tour} open={open}>
       <summary>{title}</summary>
       <div className="section-body">{children}</div>
     </details>
@@ -100,7 +100,7 @@ export function Sidebar({
 
   return (
     <aside className="sidebar">
-      <Section title="Route">
+      <Section title="Route" tour="route">
         <div className="samples">
           {SAMPLE_ROUTES.map((r) => (
             <button key={r.id} className="chip" onClick={() => loadSample(r)}>{r.label}</button>
@@ -179,7 +179,7 @@ export function Sidebar({
         )}
       </Section>
 
-      <Section title="Templates">
+      <Section title="Templates" tour="templates">
         <div className="templates">
           {TEMPLATES.map((t) => (
             <button key={t.id} className={`template ${s.template === t.id ? 'on' : ''}`} onClick={() => applyTemplate(t)}>
@@ -195,7 +195,7 @@ export function Sidebar({
         </div>
       </Section>
 
-      <Section title="Map">
+      <Section title="Map" tour="map">
         <Segmented
           label="Map style"
           value={s.mapStyle}
@@ -204,7 +204,7 @@ export function Sidebar({
         />
       </Section>
 
-      <Section title="Vehicle">
+      <Section title="Vehicle" tour="vehicle">
         <div className="vehicles">
           {VEHICLES.map((v) => (
             <button key={v.id} className={`vehicle ${s.vehicle.type === v.id ? 'on' : ''}`} onClick={() => set('vehicle.type', v.id)}>
@@ -217,7 +217,7 @@ export function Sidebar({
         <Slider label="Size" value={s.vehicle.size} min={0.5} max={2} step={0.1} onChange={(v) => set('vehicle.size', v)} format={(v) => `${v.toFixed(1)}×`} />
       </Section>
 
-      <Section title="Trail">
+      <Section title="Trail" tour="trail">
         <ColorPick label="Trail color" value={s.line.color} onChange={(c) => set('line.color', c)} />
         <Slider label="Width" value={s.line.width} min={2} max={14} step={1} onChange={(v) => set('line.width', v)} format={(v) => `${v}px`} />
         <Toggle label="Glow" checked={s.line.glow} onChange={(v) => set('line.glow', v)} />
@@ -225,7 +225,7 @@ export function Sidebar({
         <Toggle label="Focus route (dim map)" checked={s.line.spotlight} onChange={(v) => set('line.spotlight', v)} />
       </Section>
 
-      <Section title="Camera">
+      <Section title="Camera" tour="camera">
         <Segmented
           label="Camera mode"
           value={s.camera.mode}
@@ -243,7 +243,7 @@ export function Sidebar({
         <Toggle label="Ease in and out" checked={s.easing} onChange={(v) => set('easing', v)} />
       </Section>
 
-      <Section title="Overlay">
+      <Section title="Overlay" tour="overlay">
         <Toggle label="Show overlay" checked={s.hud.show} onChange={(v) => set('hud.show', v)} />
         <label className="field">
           <span className="row-label">Title</span>
@@ -253,7 +253,7 @@ export function Sidebar({
         <Segmented label="Units" value={s.hud.units} onChange={(v) => set('hud.units', v)} options={[{ value: 'km', label: 'Kilometres' }, { value: 'mi', label: 'Miles' }]} />
       </Section>
 
-      <Section title="Export">
+      <Section title="Export" tour="export">
         <Segmented
           label="Format"
           value={s.format}

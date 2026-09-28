@@ -241,7 +241,7 @@ export default function App() {
           <span className="brand-mark" aria-hidden="true" />
           <span className="brand-name">RouteReel</span>
         </div>
-        <div className="topbar-right">
+        <div className="topbar-right" data-tour="topbar">
           <p className="topbar-hint">Space to play or pause</p>
           <button
             className="icon-btn"
