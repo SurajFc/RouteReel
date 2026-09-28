@@ -6,12 +6,14 @@ Runs entirely in the browser. No API keys, no backend.
 
 ## Features
 
-- **Routes**: search places (start, stops, destination), click points on the map, or import GPX, KML, or GeoJSON. "Follow roads" snaps to real roads; turn it off for straight lines, hikes, or flights.
+- **Routes**: search places (start, stops, destination), click points on the map, use the locate button to start from where you are right now, or import GPX, KML, or GeoJSON. "Follow roads" snaps to real roads; turn it off for straight lines, hikes, or flights. The start and destination fields show their resolved coordinates underneath.
+- **Route alternatives**: when OSRM finds more than one road option between a start and destination, they're listed as chips (distance + time) so you can pick between them.
 - **Templates**: Cinematic 3D, Night ride, Travel vlog (satellite), Clean top-down, Road trip map. A template changes the look and camera, never your route or title.
 - **Vehicles**: motorbike, car, bicycle, truck, or a dot. Any color, any size. They turn with the road.
 - **Maps**: 3D streets with buildings, bright, light, dark, satellite.
-- **Camera**: chase cam with zoom, tilt and road-following rotation, or a fixed whole-route view. Drive time 5 to 120 seconds with optional ease in and out.
+- **Camera**: chase cam with zoom, tilt and road-following rotation, or a fixed whole-route view. Drive time (5 to 120 seconds) is set automatically from the route's length each time you build one — short trips play quickly, long ones get more time, with diminishing returns so it never drags — and you can still fine-tune it by hand. Optional ease in and out. The camera fits tightly to the route, and an optional "Focus route" toggle dims the map so the trail and vehicle stay the visual focus.
 - **Overlay**: title card and a live distance counter (km or miles).
+- **Interface**: light/dark theme (remembered across visits), a first-time tutorial (reopen anytime from the "?" button), and an About panel with credits, version, and license.
 - **Export formats**:
   - **MP4** (H.264) at 720p, 1080p, 1440p or 4K, 30 or 60 fps. Plays everywhere.
   - **WebM** (VP9, falls back to VP8). Smaller files for the web.
@@ -43,6 +45,14 @@ Import the repo in Vercel. It detects Vite automatically (build: `npm run build`
 npx vercel --prod
 ```
 
+## Deploy on Netlify
+
+Import the repo in Netlify; `netlify.toml` sets the build command (`npm run build`), publish directory (`dist`), and Node version. Or from the CLI:
+
+```bash
+npx netlify deploy --prod
+```
+
 ## How export works
 
 Export does not screen-record. It steps through the timeline one frame at a time, waits until every map tile for that frame has loaded, draws the overlay on top, and hands the frame to an encoder:
@@ -52,6 +62,8 @@ Export does not screen-record. It steps through the timeline one frame at a time
 - GIF: `gifenc`, with a fresh 256-color palette per frame so map colors stay accurate
 
 That's why exports are smooth even on a slow connection, and why rendering can take longer than the video itself. GIFs are the slowest, since every frame is color-quantized.
+
+MP4 and WebM bitrate tapers off as resolution climbs rather than scaling 1:1 with pixel count — map graphics and camera motion compress far better than real footage, so a 4K export doesn't balloon to 50+ MB/min the way a naive bits-per-pixel formula would. The size estimate in the Export panel reflects this.
 
 Browsers without WebCodecs fall back to real-time recording with MediaRecorder (MP4 where supported, otherwise WebM). Convert WebM with:
 
@@ -69,7 +81,9 @@ src/
   components/
     Stage.jsx             map, overlay canvas, transport, export
     Sidebar.jsx           all controls
-    PlaceInput.jsx        place search with suggestions
+    PlaceInput.jsx        place search with suggestions and "use my location"
+    Tutorial.jsx          first-time-visitor walkthrough
+    About.jsx             About panel: description, credits, version
   lib/
     animator.js           the engine: timeline, camera, layers
     exporter.js           frame-by-frame MP4, WebM, and GIF export
@@ -77,7 +91,7 @@ src/
     geo.js                distance, heading, interpolation
     vehicles.js           top-down vehicle SVGs
     presets.js            map styles, templates, sample routes
-    routing.js            routing and geocoding
+    routing.js            routing, geocoding, and geolocation
     importers.js          GPX, KML, GeoJSON
 ```
 
@@ -90,7 +104,7 @@ src/
 | Vector maps | OpenFreeMap, CARTO | Free, keyless |
 | Satellite | Esri World Imagery | Check Esri's terms before commercial use |
 | Routing | routing.openstreetmap.de (OSRM) | Public demo server, fair-use only |
-| Search | Photon by Komoot | Public server, fair-use only |
+| Search & geolocation | Photon by Komoot | Public server, fair-use only. Powers both place search and reverse-geocoding your browser location for "use my location" |
 
 Fine for personal projects and videos. If you ship this to many users, self-host OSRM and Photon, or swap in Mapbox or Google in `lib/routing.js` and `lib/presets.js`.
 

@@ -34,6 +34,9 @@
 
 * { box-sizing: border-box; }
 html, body, #root { height: 100%; margin: 0; }
+/* The sidebar owns its own scrollbar (see .sidebar); keep the window from
+   also scrolling on desktop, where the layout is meant to fit one screen. */
+html, body { overflow: hidden; }
 body {
   background: var(--asphalt);
   color: var(--signal);
@@ -159,6 +162,8 @@ button, input, select { font: inherit; color: inherit; }
 
 /* waypoints */
 .waypoints { display: grid; gap: 6px; position: relative; }
+.wp-coords { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: -2px; }
+.wp-coord { font-family: ui-monospace, "SF Mono", Consolas, monospace; font-size: 11.5px; color: var(--muted); }
 .wp-row { display: flex; gap: 4px; align-items: stretch; }
 .place { position: relative; flex: 1; }
 .place-marker {
@@ -443,6 +448,19 @@ input[type='range'] { accent-color: var(--paint); width: 100%; }
   place-items: center;
   background: rgba(14, 17, 20, 0.35);
 }
+
+.crash {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  background: var(--asphalt);
+  padding: 16px;
+}
+.crash-card { width: min(360px, 100%); display: grid; gap: 10px; text-align: center; justify-items: center; }
+.crash-card h2 { margin: 0; font: 600 22px/1.2 var(--cond); }
+.crash-card p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.5; }
 .export-card {
   width: min(300px, 80%);
   background: var(--shoulder);
@@ -469,7 +487,9 @@ input[type='range'] { accent-color: var(--paint); width: 100%; }
 }
 .tutorial-card {
   position: relative;
-  width: min(380px, 100%);
+  width: min(420px, 100%);
+  max-height: 85vh;
+  overflow-y: auto;
   background: var(--shoulder);
   border: 1px solid var(--kerb);
   border-radius: 10px;
@@ -479,6 +499,8 @@ input[type='range'] { accent-color: var(--paint); width: 100%; }
 }
 .tutorial-card h2 { margin: 0; font: 600 22px/1.2 var(--cond); padding-right: 20px; }
 .tutorial-card p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.5; }
+.tutorial-list { margin: 0; padding-left: 20px; display: grid; gap: 8px; }
+.tutorial-list li { color: var(--muted); font-size: 13.5px; line-height: 1.45; }
 .tutorial-close {
   position: absolute;
   top: 10px;
@@ -489,7 +511,6 @@ input[type='range'] { accent-color: var(--paint); width: 100%; }
 .tutorial-dots .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--kerb); }
 .tutorial-dots .dot.on { background: var(--paint); }
 
-.about-card { width: min(420px, 100%); max-height: 85vh; overflow-y: auto; }
 .about-card h3 { margin: 4px 0 0; font: 600 14px/1.2 var(--cond); text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
 .credits { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
 .credits li { font-size: 13px; line-height: 1.4; color: var(--muted); }
@@ -509,6 +530,7 @@ input[type='range'] { accent-color: var(--paint); width: 100%; }
   .stage-body { margin: 12px 12px 0; }
   .transport { padding: 10px 12px 12px; }
   .topbar-hint { display: none; }
+  html, body { overflow: visible; }
 }
 
 @media (prefers-reduced-motion: reduce) {

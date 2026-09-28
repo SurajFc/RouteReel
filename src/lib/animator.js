@@ -230,34 +230,40 @@ export class RouteAnimator {
   }
 
   render() {
-    if (!this.track || !this.settings || !this.map.getSource(S.done)) return;
-    const f = this.frameAt(this.t);
+    if (!this.track || !this.settings || !this.map.style || !this.map.getSource(S.done) || !this.map.getSource(S.veh)) return;
+    try {
+      const f = this.frameAt(this.t);
 
-    // Damp camera rotation during continuous playback; exact when seeking
-    if (this.playing && this.settings.camera.rotate && this.settings.camera.mode === 'follow') {
-      this.smoothBearing = this.smoothBearing == null ? f.cam.bearing : lerpAngle(this.smoothBearing, f.cam.bearing, 0.08);
-      f.cam = { ...f.cam, bearing: this.smoothBearing };
-    } else {
-      this.smoothBearing = f.cam.bearing;
+      // Damp camera rotation during continuous playback; exact when seeking
+      if (this.playing && this.settings.camera.rotate && this.settings.camera.mode === 'follow') {
+        this.smoothBearing = this.smoothBearing == null ? f.cam.bearing : lerpAngle(this.smoothBearing, f.cam.bearing, 0.08);
+        f.cam = { ...f.cam, bearing: this.smoothBearing };
+      } else {
+        this.smoothBearing = f.cam.bearing;
+      }
+
+      const traveled = f.dist > 0 ? sliceTo(this.track, f.dist) : [this.track.coords[0], this.track.coords[0]];
+      this.map.getSource(S.done).setData(line(traveled));
+      this.map.getSource(S.veh).setData({
+        type: 'Feature',
+        geometry: { type: 'Point', coordinates: pointAt(this.track, f.dist).point },
+        properties: { bearing: f.iconHeading },
+      });
+      this.map.jumpTo(f.cam);
+
+      this.onFrame?.({
+        t: this.t,
+        total: this.totalTime,
+        dist: f.dist,
+        routeLength: this.track.total,
+        progress: f.p,
+        playing: this.playing,
+      });
+    } catch (err) {
+      // The map can be mid-transition (style swap, resize) when a setting
+      // changes during playback; skip this frame instead of crashing it.
+      console.warn('RouteAnimator: skipped a frame', err);
     }
-
-    const traveled = f.dist > 0 ? sliceTo(this.track, f.dist) : [this.track.coords[0], this.track.coords[0]];
-    this.map.getSource(S.done).setData(line(traveled));
-    this.map.getSource(S.veh).setData({
-      type: 'Feature',
-      geometry: { type: 'Point', coordinates: pointAt(this.track, f.dist).point },
-      properties: { bearing: f.iconHeading },
-    });
-    this.map.jumpTo(f.cam);
-
-    this.onFrame?.({
-      t: this.t,
-      total: this.totalTime,
-      dist: f.dist,
-      routeLength: this.track.total,
-      progress: f.p,
-      playing: this.playing,
-    });
   }
 
   // ---------- transport ----------

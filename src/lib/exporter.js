@@ -67,6 +67,17 @@ async function eachFrame({ fps, totalTime, holdSeconds, renderFrame, onProgress,
   return true;
 }
 
+// Bits per pixel per frame needed for a clean encode tapers off as resolution
+// climbs: map graphics and camera motion are far more compressible than real
+// footage, so 4K doesn't need bitrate scaled up 1:1 with pixel count the way
+// noisy video does. Keeps 4K/60fps exports from ballooning to 50+ Mbps.
+function videoBitrate(format, width, height, fps) {
+  const megapixels = (width * height) / 1e6;
+  const bppBase = format === 'webm' ? 0.055 : 0.075;
+  const scale = Math.min(1, Math.sqrt(2 / Math.max(megapixels, 0.5)));
+  return Math.round(width * height * fps * bppBase * scale);
+}
+
 export async function encodeVideo({ format, codec, muxCodec, width, height, fps, ...loop }) {
   const muxer =
     format === 'mp4'
@@ -78,7 +89,7 @@ export async function encodeVideo({ format, codec, muxCodec, width, height, fps,
     output: (chunk, meta) => muxer.addVideoChunk(chunk, meta),
     error: (e) => (encodeError = e),
   });
-  const bitrate = Math.round(width * height * fps * (format === 'webm' ? 0.09 : 0.12)); // ~15 Mbps MP4 at 1080p30
+  const bitrate = videoBitrate(format, width, height, fps);
   encoder.configure({ codec, width, height, framerate: fps, bitrate, latencyMode: 'quality' });
 
   const step = 1e6 / fps;
@@ -126,7 +137,7 @@ export async function encodeGif({ width, height, fps, ...loop }) {
 /** Rough output size so a 200 MB GIF isn't a surprise. */
 export function estimateSize(format, { width, height, fps, seconds }) {
   if (format === 'gif') return width * height * fps * seconds * 0.35;
-  return (width * height * fps * (format === 'webm' ? 0.09 : 0.12) * seconds) / 8;
+  return (videoBitrate(format, width, height, fps) * seconds) / 8;
 }
 
 export function formatBytes(b) {

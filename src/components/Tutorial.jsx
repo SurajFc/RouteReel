@@ -3,19 +3,49 @@ import { useState } from 'react';
 const STEPS = [
   {
     title: 'Welcome to RouteReel',
-    body: 'Turn any trip into a cinematic route animation. Pick two points, style it, and export a video in a couple of minutes.',
+    body: 'Turn any trip into a cinematic route animation. Build your route and style it in the sidebar on the left, watch it play on the right, and export a video in a couple of minutes.',
   },
   {
-    title: 'Add a start and destination',
-    body: 'Search for a place, click "Pick on map" and tap the map, or use the location icon in the field to start from where you are right now.',
+    title: 'Build your route',
+    items: [
+      'Search a place in the Start/Destination fields, or tap "Pick on map" and click the map to drop points.',
+      'Tap the target icon in a field to use your current location.',
+      '"Add stop" adds a waypoint, "Reverse" flips the direction.',
+      'Toggle "Follow roads" for real streets, or off for a straight line. When more than one road option comes back, pick between them below the fields.',
+    ],
   },
   {
-    title: 'Make it yours',
-    body: 'Choose a vehicle, a trail color and glow, a camera angle, and a look from the Templates panel — everything updates live.',
+    title: 'Style your reel',
+    items: [
+      'Templates — one click for a whole look: camera, vehicle, trail, and map style.',
+      'Map — switch between 3D streets, bright, light, dark, and satellite.',
+      'Vehicle — pick your ride, its color, and its size.',
+      'Trail — trail color, width, glow, and "Focus route" to dim the map so your path stands out.',
+    ],
+  },
+  {
+    title: 'Camera & overlay',
+    items: [
+      'Camera — a chase cam that follows the road, or a fixed whole-route view, with zoom, tilt, and rotation.',
+      'Drive time sizes itself to your route automatically — drag the slider to override it.',
+      'Overlay — add a title card and a live distance counter to the video.',
+    ],
   },
   {
     title: 'Export your reel',
-    body: 'Pick a format and size in the Export panel, then hit Export. Your video downloads straight to your device.',
+    items: [
+      'Pick a format (MP4, WebM, or GIF) and a frame size, then hit Export.',
+      'Grab a still frame (PNG), or the route as GPX or GeoJSON.',
+      'Save the whole project to reopen and keep editing later.',
+    ],
+  },
+  {
+    title: 'Always here when you need it',
+    items: [
+      'The sun/moon icon in the top bar switches between light and dark.',
+      'The "i" button opens About RouteReel — credits, version, and license.',
+      'The "?" button reopens this tutorial anytime.',
+    ],
   },
 ];
 
@@ -29,7 +59,14 @@ export function Tutorial({ onClose }) {
       <div className="tutorial-card">
         <button className="icon-btn tutorial-close" onClick={onClose} aria-label="Close tutorial">×</button>
         <h2>{step.title}</h2>
-        <p>{step.body}</p>
+        {step.body && <p>{step.body}</p>}
+        {step.items && (
+          <ul className="tutorial-list">
+            {step.items.map((item, d) => (
+              <li key={d}>{item}</li>
+            ))}
+          </ul>
+        )}
         <div className="tutorial-dots" aria-hidden="true">
           {STEPS.map((_, d) => (
             <span key={d} className={`dot ${d === i ? 'on' : ''}`} />

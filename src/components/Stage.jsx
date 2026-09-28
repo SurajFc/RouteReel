@@ -115,20 +115,30 @@ export const Stage = forwardRef(function Stage({ settings, coords, waypoints, pi
   useEffect(() => {
     const map = mapRef.current, anim = animRef.current;
     if (!map) return;
-    if (styleKeyRef.current !== settings.mapStyle) {
-      styleKeyRef.current = settings.mapStyle;
-      anim.settings = settings;
-      map.setStyle(styleOf(settings.mapStyle), { diff: false });
-    } else {
-      anim.setSettings(settings);
+    try {
+      if (styleKeyRef.current !== settings.mapStyle) {
+        styleKeyRef.current = settings.mapStyle;
+        anim.settings = settings;
+        map.setStyle(styleOf(settings.mapStyle), { diff: false });
+      } else {
+        anim.setSettings(settings).catch((err) => console.warn('Stage: settings update skipped', err));
+      }
+      drawOverlay();
+    } catch (err) {
+      // A style swap can land mid-transition if it fires while the map is
+      // already mid-transition (e.g. rapid clicks during playback).
+      console.warn('Stage: settings update skipped', err);
     }
-    drawOverlay();
   }, [settings, drawOverlay]);
 
   // ---------- route ----------
   useEffect(() => {
-    animRef.current?.setTrack(coords);
-    drawOverlay();
+    try {
+      animRef.current?.setTrack(coords);
+      drawOverlay();
+    } catch (err) {
+      console.warn('Stage: route update skipped', err);
+    }
   }, [coords, drawOverlay]);
 
   // ---------- waypoint pins (editor only, never exported) ----------

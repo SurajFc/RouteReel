@@ -127,6 +127,17 @@ export function Sidebar({
           })}
         </div>
 
+        {(waypoints[0]?.coord || waypoints[waypoints.length - 1]?.coord) && (
+          <div className="wp-coords">
+            {waypoints[0]?.coord && (
+              <span className="wp-coord">A {waypoints[0].coord[1].toFixed(5)}, {waypoints[0].coord[0].toFixed(5)}</span>
+            )}
+            {waypoints[waypoints.length - 1]?.coord && (
+              <span className="wp-coord">B {waypoints[waypoints.length - 1].coord[1].toFixed(5)}, {waypoints[waypoints.length - 1].coord[0].toFixed(5)}</span>
+            )}
+          </div>
+        )}
+
         <div className="btn-row">
           <button className="btn ghost small" onClick={addStop}>Add stop</button>
           <button className="btn ghost small" onClick={reverse}>Reverse</button>
