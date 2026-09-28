@@ -116,6 +116,7 @@ export function Sidebar({
                   marker={i === 0 ? 'A' : last ? 'B' : i}
                   placeholder={i === 0 ? 'Start' : last ? 'Destination' : `Stop ${i}`}
                   onSelect={(r) => setWaypoint(i, r)}
+                  locate={i === 0 || last}
                 />
                 {waypoints.length > 2 && (
                   <button className="icon-btn" onClick={() => removeStop(i)} aria-label={`Remove ${w.label || 'stop'}`}>×</button>

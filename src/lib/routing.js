@@ -33,3 +33,27 @@ export async function geocode(query, signal) {
     return { label, coord: f.geometry.coordinates };
   });
 }
+
+export async function reverseGeocode([lon, lat], signal) {
+  const url = `https://photon.komoot.io/reverse?lon=${lon}&lat=${lat}`;
+  const res = await fetch(url, { signal });
+  if (!res.ok) return null;
+  const json = await res.json();
+  const p = json.features?.[0]?.properties;
+  if (!p) return null;
+  return [p.name, p.city !== p.name ? p.city : null, p.state, p.country].filter(Boolean).join(', ') || null;
+}
+
+export function locateMe() {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) {
+      reject(new Error('Geolocation is not supported in this browser.'));
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => resolve([pos.coords.longitude, pos.coords.latitude]),
+      (err) => reject(new Error(err.code === err.PERMISSION_DENIED ? 'Location permission was denied.' : 'Could not get your location.')),
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  });
+}

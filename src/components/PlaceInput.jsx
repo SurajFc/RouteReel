@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
-import { geocode } from '../lib/routing';
+import { geocode, locateMe, reverseGeocode } from '../lib/routing';
 
-export function PlaceInput({ value, placeholder, onSelect, marker }) {
+export function PlaceInput({ value, placeholder, onSelect, marker, locate = false }) {
   const [text, setText] = useState(value || '');
   const [results, setResults] = useState([]);
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
+  const [locating, setLocating] = useState(false);
+  const [locateError, setLocateError] = useState(null);
   const abortRef = useRef(null);
   const typedRef = useRef(false);
 
@@ -39,12 +41,27 @@ export function PlaceInput({ value, placeholder, onSelect, marker }) {
     onSelect(r);
   };
 
+  const useMyLocation = async () => {
+    setLocateError(null);
+    setLocating(true);
+    try {
+      const coord = await locateMe();
+      const name = await reverseGeocode(coord).catch(() => null);
+      choose({ label: name || `${coord[1].toFixed(4)}, ${coord[0].toFixed(4)}`, coord });
+    } catch (err) {
+      setLocateError(err.message);
+    } finally {
+      setLocating(false);
+    }
+  };
+
   return (
     <div className="place">
       <span className="place-marker" aria-hidden="true">{marker}</span>
       <input
         value={text}
         placeholder={placeholder}
+        className={locate ? 'has-locate' : ''}
         onChange={(e) => {
           typedRef.current = true;
           setText(e.target.value);
@@ -60,6 +77,22 @@ export function PlaceInput({ value, placeholder, onSelect, marker }) {
         }}
         aria-autocomplete="list"
       />
+      {locate && (
+        <button
+          type="button"
+          className={`place-locate ${locating ? 'busy' : ''}`}
+          onClick={useMyLocation}
+          disabled={locating}
+          aria-label="Use my location"
+          title="Use my location"
+        >
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+            <circle cx="12" cy="12" r="3" />
+            <path d="M12 2v3M12 19v3M2 12h3M19 12h3" strokeLinecap="round" />
+          </svg>
+        </button>
+      )}
+      {locateError && <p className="place-error">{locateError}</p>}
       {open && results.length > 0 && (
         <ul className="suggest" role="listbox">
           {results.map((r, i) => (

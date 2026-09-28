@@ -160,7 +160,37 @@ button, input, select { font: inherit; color: inherit; }
   padding: 0 10px;
 }
 .place input { padding-left: 36px; }
+.place input.has-locate { padding-right: 32px; }
 .place input:focus, .field input:focus { outline: none; border-color: var(--paint); }
+.place-locate {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border: none;
+  background: transparent;
+  border-radius: 50%;
+  cursor: pointer;
+  color: var(--muted);
+}
+.place-locate:hover:not(:disabled) { color: var(--paint); background: var(--kerb-soft); }
+.place-locate.busy { color: var(--paint); animation: locate-pulse 1s ease-in-out infinite; }
+.place-locate:disabled { cursor: wait; }
+@keyframes locate-pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
+.place-error {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  margin: 0;
+  font-size: 11px;
+  color: var(--error);
+}
 .suggest {
   position: absolute;
   z-index: 20;
