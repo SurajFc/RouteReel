@@ -63,6 +63,8 @@ Export does not screen-record. It steps through the timeline one frame at a time
 
 That's why exports are smooth even on a slow connection, and why rendering can take longer than the video itself. GIFs are the slowest, since every frame is color-quantized.
 
+MP4 and WebM bitrate tapers off as resolution climbs rather than scaling 1:1 with pixel count — map graphics and camera motion compress far better than real footage, so a 4K export doesn't balloon to 50+ MB/min the way a naive bits-per-pixel formula would. The size estimate in the Export panel reflects this.
+
 Browsers without WebCodecs fall back to real-time recording with MediaRecorder (MP4 where supported, otherwise WebM). Convert WebM with:
 
 ```bash
