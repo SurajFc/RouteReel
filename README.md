@@ -11,7 +11,7 @@ Runs entirely in the browser. No API keys, no backend.
 - **Templates**: Cinematic 3D, Night ride, Travel vlog (satellite), Clean top-down, Road trip map. A template changes the look and camera, never your route or title.
 - **Vehicles**: motorbike, car, bicycle, truck, or a dot. Any color, any size. They turn with the road.
 - **Maps**: 3D streets with buildings, bright, light, dark, satellite.
-- **Camera**: chase cam with zoom, tilt and road-following rotation, or a fixed whole-route view. Drive time 5 to 120 seconds with optional ease in and out. The camera fits tightly to the route, and an optional "Focus route" toggle dims the map so the trail and vehicle stay the visual focus.
+- **Camera**: chase cam with zoom, tilt and road-following rotation, or a fixed whole-route view. Drive time (5 to 120 seconds) is set automatically from the route's length each time you build one — short trips play quickly, long ones get more time, with diminishing returns so it never drags — and you can still fine-tune it by hand. Optional ease in and out. The camera fits tightly to the route, and an optional "Focus route" toggle dims the map so the trail and vehicle stay the visual focus.
 - **Overlay**: title card and a live distance counter (km or miles).
 - **Interface**: light/dark theme (remembered across visits), a first-time tutorial (reopen anytime from the "?" button), and an About panel with credits, version, and license.
 - **Export formats**:

@@ -5,7 +5,7 @@ import { Tutorial } from './components/Tutorial';
 import { About } from './components/About';
 import { DEFAULT_SETTINGS, SAMPLE_ROUTES, mergeSettings } from './lib/presets';
 import { fetchRoute } from './lib/routing';
-import { buildTrack } from './lib/geo';
+import { buildTrack, autoDriveTime } from './lib/geo';
 import { parseRouteFile, toGPX, downloadBlob, slug } from './lib/importers';
 
 const STORE = 'routereel:v1';
@@ -127,7 +127,12 @@ export default function App() {
         setRouteOptions(options);
         setRouteChoice(0);
         setRoute({ name, coords });
-        setSettings((s) => (s.hud.title && s.hud.title !== route?.name ? s : { ...s, hud: { ...s.hud, title: name } }));
+        const duration = autoDriveTime(buildTrack(coords).total);
+        setSettings((s) => ({
+          ...s,
+          duration,
+          hud: { ...s.hud, title: s.hud.title && s.hud.title !== route?.name ? s.hud.title : name },
+        }));
       } catch (err) {
         setMessage({ kind: 'error', text: err.message });
       } finally {
@@ -142,6 +147,7 @@ export default function App() {
     if (!opt) return;
     setRouteChoice(i);
     setRoute((r) => ({ ...r, coords: opt.coords }));
+    setSettings((s) => ({ ...s, duration: autoDriveTime(opt.distance) }));
   };
 
   // First visit: start with a sample so there's something to play
@@ -198,7 +204,7 @@ export default function App() {
       setRouteChoice(0);
       setRoute({ name, coords });
       setWaypoints([wp(`${name} start`, coords[0]), wp(`${name} end`, coords[coords.length - 1])]);
-      set('hud.title', name);
+      setSettings((s) => ({ ...s, duration: autoDriveTime(buildTrack(coords).total), hud: { ...s.hud, title: name } }));
       setMessage(null);
     } catch (err) {
       setMessage({ kind: 'error', text: err.message });

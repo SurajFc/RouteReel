@@ -100,6 +100,13 @@ export function formatDistance(m, units = 'km') {
   return km < 100 ? `${km.toFixed(1)} km` : `${Math.round(km)} km`;
 }
 
+// Short routes should be quick to watch, long ones longer, with diminishing
+// returns so a cross-country trip doesn't need a two-minute video to match.
+export function autoDriveTime(meters) {
+  const km = meters / 1000;
+  return Math.round(Math.min(120, Math.max(5, 6 + Math.sqrt(km) * 3)));
+}
+
 export function formatDuration(s) {
   const mins = Math.round(s / 60);
   if (mins < 60) return `${mins} min`;
