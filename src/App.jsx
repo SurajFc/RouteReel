@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Stage } from './components/Stage';
 import { Sidebar } from './components/Sidebar';
 import { Tutorial } from './components/Tutorial';
+import { About } from './components/About';
 import { DEFAULT_SETTINGS, SAMPLE_ROUTES, mergeSettings } from './lib/presets';
 import { fetchRoute } from './lib/routing';
 import { buildTrack } from './lib/geo';
@@ -9,6 +10,7 @@ import { parseRouteFile, toGPX, downloadBlob, slug } from './lib/importers';
 
 const STORE = 'routereel:v1';
 const TUTORIAL_SEEN = 'routereel:tutorial-seen';
+const THEME_KEY = 'routereel:theme';
 let uid = 0;
 const wp = (label = '', coord = null) => ({ id: ++uid, label, coord });
 const short = (label) => (label || '').split(',')[0].trim();
@@ -41,6 +43,14 @@ export default function App() {
       return false;
     }
   });
+  const [showAbout, setShowAbout] = useState(false);
+  const [theme, setTheme] = useState(() => {
+    try {
+      return localStorage.getItem(THEME_KEY) || 'dark';
+    } catch {
+      return 'dark';
+    }
+  });
   const stageRef = useRef(null);
 
   const closeTutorial = () => {
@@ -51,6 +61,17 @@ export default function App() {
       /* storage full or disabled */
     }
   };
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    try {
+      localStorage.setItem(THEME_KEY, theme);
+    } catch {
+      /* storage full or disabled */
+    }
+  }, [theme]);
+
+  const toggleTheme = () => setTheme((t) => (t === 'dark' ? 'light' : 'dark'));
 
   const routeInfo = useMemo(
     () => (route ? { ...route, length: buildTrack(route.coords).total } : null),
@@ -216,10 +237,35 @@ export default function App() {
         </div>
         <div className="topbar-right">
           <p className="topbar-hint">Space to play or pause</p>
+          <button
+            className="icon-btn"
+            onClick={toggleTheme}
+            aria-label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
+            title={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
+          >
+            {theme === 'dark' ? (
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="4.5" />
+                <path d="M12 2.5v2.5M12 19v2.5M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2.5 12H5M19 12h2.5M4.2 19.8 6 18M18 6l1.8-1.8" />
+              </svg>
+            ) : (
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
+                <path d="M20.5 14.7A8.5 8.5 0 0 1 9.3 3.5a.5.5 0 0 0-.6-.6A9 9 0 1 0 21 15.3a.5.5 0 0 0-.5-.6Z" />
+              </svg>
+            )}
+          </button>
+          <button className="icon-btn" onClick={() => setShowAbout(true)} aria-label="About RouteReel" title="About RouteReel">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="9" />
+              <path d="M12 11v5.5" />
+              <circle cx="12" cy="8" r="0.75" fill="currentColor" stroke="none" />
+            </svg>
+          </button>
           <button className="icon-btn" onClick={() => setShowTutorial(true)} aria-label="Show tutorial" title="Show tutorial">?</button>
         </div>
       </header>
       {showTutorial && <Tutorial onClose={closeTutorial} />}
+      {showAbout && <About onClose={() => setShowAbout(false)} />}
       <Sidebar
         settings={settings}
         set={set}
