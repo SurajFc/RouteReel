@@ -34,6 +34,9 @@
 
 * { box-sizing: border-box; }
 html, body, #root { height: 100%; margin: 0; }
+/* The sidebar owns its own scrollbar (see .sidebar); keep the window from
+   also scrolling on desktop, where the layout is meant to fit one screen. */
+html, body { overflow: hidden; }
 body {
   background: var(--asphalt);
   color: var(--signal);
@@ -445,6 +448,19 @@ input[type='range'] { accent-color: var(--paint); width: 100%; }
   place-items: center;
   background: rgba(14, 17, 20, 0.35);
 }
+
+.crash {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  background: var(--asphalt);
+  padding: 16px;
+}
+.crash-card { width: min(360px, 100%); display: grid; gap: 10px; text-align: center; justify-items: center; }
+.crash-card h2 { margin: 0; font: 600 22px/1.2 var(--cond); }
+.crash-card p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.5; }
 .export-card {
   width: min(300px, 80%);
   background: var(--shoulder);
@@ -514,6 +530,7 @@ input[type='range'] { accent-color: var(--paint); width: 100%; }
   .stage-body { margin: 12px 12px 0; }
   .transport { padding: 10px 12px 12px; }
   .topbar-hint { display: none; }
+  html, body { overflow: visible; }
 }
 
 @media (prefers-reduced-motion: reduce) {
