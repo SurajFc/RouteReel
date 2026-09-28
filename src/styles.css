@@ -159,6 +159,8 @@ button, input, select { font: inherit; color: inherit; }
 
 /* waypoints */
 .waypoints { display: grid; gap: 6px; position: relative; }
+.wp-coords { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: -2px; }
+.wp-coord { font-family: ui-monospace, "SF Mono", Consolas, monospace; font-size: 11.5px; color: var(--muted); }
 .wp-row { display: flex; gap: 4px; align-items: stretch; }
 .place { position: relative; flex: 1; }
 .place-marker {
