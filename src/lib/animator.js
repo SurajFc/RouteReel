@@ -167,7 +167,7 @@ export class RouteAnimator {
   getOverviewCam() {
     if (this.overviewCam) return this.overviewCam;
     const canvas = this.map.getCanvas();
-    const pad = Math.round(Math.min(canvas.clientWidth, canvas.clientHeight) * 0.14);
+    const pad = Math.round(Math.min(canvas.clientWidth, canvas.clientHeight) * 0.08);
     const cam = this.map.cameraForBounds(boundsOf(this.track.coords), { padding: pad, bearing: 0 });
     this.overviewCam = cam
       ? { center: [cam.center.lng, cam.center.lat], zoom: cam.zoom, pitch: 0, bearing: 0 }

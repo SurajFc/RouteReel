@@ -2,7 +2,7 @@ import { useRef } from 'react';
 import { PlaceInput } from './PlaceInput';
 import { VEHICLES, vehicleDataURL } from '../lib/vehicles';
 import { MAP_STYLES, TEMPLATES, SAMPLE_ROUTES, SWATCHES, ASPECTS } from '../lib/presets';
-import { formatDistance } from '../lib/geo';
+import { formatDistance, formatDuration } from '../lib/geo';
 import { FORMATS, estimateSize, formatBytes } from '../lib/exporter';
 
 function exportPlan(s) {
@@ -90,6 +90,7 @@ export function Sidebar({
   waypoints, setWaypoint, addStop, removeStop, reverse,
   followRoads, setFollowRoads, pickMode, setPickMode,
   buildRoute, loadSample, importFile, building, message, route,
+  routeOptions, routeChoice, chooseRoute,
   onExportVideo, onExportFrame, onDownloadGPX, onDownloadGeoJSON, onSaveProject, onOpenProject,
 }) {
   const fileRef = useRef(null);
@@ -148,6 +149,23 @@ export function Sidebar({
         {route && !message && (
           <p className="msg info">{route.name}, {formatDistance(route.length, s.hud.units)}</p>
         )}
+
+        {routeOptions?.length > 1 && (
+          <div className="route-options" role="radiogroup" aria-label="Route options">
+            {routeOptions.map((o, i) => (
+              <button
+                key={i}
+                className={`route-option ${i === routeChoice ? 'on' : ''}`}
+                role="radio"
+                aria-checked={i === routeChoice}
+                onClick={() => chooseRoute(i)}
+              >
+                <span className="route-option-name">{i === 0 ? 'Fastest' : `Alternative ${i}`}</span>
+                <span className="route-option-stats">{formatDistance(o.distance, s.hud.units)} · {formatDuration(o.duration)}</span>
+              </button>
+            ))}
+          </div>
+        )}
       </Section>
 
       <Section title="Templates">
@@ -193,6 +211,7 @@ export function Sidebar({
         <Slider label="Width" value={s.line.width} min={2} max={14} step={1} onChange={(v) => set('line.width', v)} format={(v) => `${v}px`} />
         <Toggle label="Glow" checked={s.line.glow} onChange={(v) => set('line.glow', v)} />
         <Toggle label="Show the road ahead" checked={s.line.showRemaining} onChange={(v) => set('line.showRemaining', v)} />
+        <Toggle label="Focus route (dim map)" checked={s.line.spotlight} onChange={(v) => set('line.spotlight', v)} />
       </Section>
 
       <Section title="Camera">

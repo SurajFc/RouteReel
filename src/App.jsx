@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Stage } from './components/Stage';
 import { Sidebar } from './components/Sidebar';
+import { Tutorial } from './components/Tutorial';
 import { DEFAULT_SETTINGS, SAMPLE_ROUTES, mergeSettings } from './lib/presets';
 import { fetchRoute } from './lib/routing';
 import { buildTrack } from './lib/geo';
 import { parseRouteFile, toGPX, downloadBlob, slug } from './lib/importers';
 
 const STORE = 'routereel:v1';
+const TUTORIAL_SEEN = 'routereel:tutorial-seen';
 let uid = 0;
 const wp = (label = '', coord = null) => ({ id: ++uid, label, coord });
 const short = (label) => (label || '').split(',')[0].trim();
@@ -26,11 +28,29 @@ export default function App() {
     stored?.waypoints?.length >= 2 ? stored.waypoints.map((w) => wp(w.label, w.coord)) : [wp(), wp()]
   );
   const [route, setRoute] = useState(stored?.route || null);
+  const [routeOptions, setRouteOptions] = useState([]);
+  const [routeChoice, setRouteChoice] = useState(0);
   const [followRoads, setFollowRoads] = useState(stored?.followRoads ?? true);
   const [pickMode, setPickMode] = useState(false);
   const [building, setBuilding] = useState(false);
   const [message, setMessage] = useState(null);
+  const [showTutorial, setShowTutorial] = useState(() => {
+    try {
+      return !localStorage.getItem(TUTORIAL_SEEN);
+    } catch {
+      return false;
+    }
+  });
   const stageRef = useRef(null);
+
+  const closeTutorial = () => {
+    setShowTutorial(false);
+    try {
+      localStorage.setItem(TUTORIAL_SEEN, '1');
+    } catch {
+      /* storage full or disabled */
+    }
+  };
 
   const routeInfo = useMemo(
     () => (route ? { ...route, length: buildTrack(route.coords).total } : null),
@@ -73,10 +93,18 @@ export default function App() {
       setBuilding(true);
       setMessage(null);
       try {
-        const coords = roads
-          ? (await fetchRoute(pts.map((p) => p.coord), settings.vehicle.type)).coords
-          : pts.map((p) => p.coord);
         const name = `${short(pts[0].label)} to ${short(pts[pts.length - 1].label)}`;
+        let coords, options;
+        if (roads) {
+          const result = await fetchRoute(pts.map((p) => p.coord), settings.vehicle.type);
+          options = result.routes;
+          coords = options[0].coords;
+        } else {
+          coords = pts.map((p) => p.coord);
+          options = [];
+        }
+        setRouteOptions(options);
+        setRouteChoice(0);
         setRoute({ name, coords });
         setSettings((s) => (s.hud.title && s.hud.title !== route?.name ? s : { ...s, hud: { ...s.hud, title: name } }));
       } catch (err) {
@@ -87,6 +115,13 @@ export default function App() {
     },
     [waypoints, followRoads, settings.vehicle.type, route]
   );
+
+  const chooseRoute = (i) => {
+    const opt = routeOptions[i];
+    if (!opt) return;
+    setRouteChoice(i);
+    setRoute((r) => ({ ...r, coords: opt.coords }));
+  };
 
   // First visit: start with a sample so there's something to play
   useEffect(() => {
@@ -116,6 +151,8 @@ export default function App() {
     const next = [...waypoints].reverse();
     setWaypoints(next);
     if (route) {
+      setRouteOptions([]);
+      setRouteChoice(0);
       setRoute({ name: `${short(next[0].label) || 'Start'} to ${short(next[next.length - 1].label) || 'End'}`, coords: [...route.coords].reverse() });
     }
   };
@@ -136,6 +173,8 @@ export default function App() {
     if (!file) return;
     try {
       const { name, coords } = await parseRouteFile(file);
+      setRouteOptions([]);
+      setRouteChoice(0);
       setRoute({ name, coords });
       setWaypoints([wp(`${name} start`, coords[0]), wp(`${name} end`, coords[coords.length - 1])]);
       set('hud.title', name);
@@ -158,6 +197,8 @@ export default function App() {
       const data = JSON.parse(await file.text());
       if (data.app !== 'routereel') return importFile(file); // plain GeoJSON
       setSettings(mergeSettings(DEFAULT_SETTINGS, data.settings));
+      setRouteOptions([]);
+      setRouteChoice(0);
       setRoute(data.route);
       if (data.waypoints?.length >= 2) setWaypoints(data.waypoints.map((w) => wp(w.label, w.coord)));
       setMessage(null);
@@ -173,8 +214,12 @@ export default function App() {
           <span className="brand-mark" aria-hidden="true" />
           <span className="brand-name">RouteReel</span>
         </div>
-        <p className="topbar-hint">Space to play or pause</p>
+        <div className="topbar-right">
+          <p className="topbar-hint">Space to play or pause</p>
+          <button className="icon-btn" onClick={() => setShowTutorial(true)} aria-label="Show tutorial" title="Show tutorial">?</button>
+        </div>
       </header>
+      {showTutorial && <Tutorial onClose={closeTutorial} />}
       <Sidebar
         settings={settings}
         set={set}
@@ -194,6 +239,9 @@ export default function App() {
         building={building}
         message={message}
         route={routeInfo}
+        routeOptions={routeOptions}
+        routeChoice={routeChoice}
+        chooseRoute={chooseRoute}
         onExportVideo={() => stageRef.current.exportVideo()}
         onExportFrame={() => stageRef.current.exportFrame()}
         onDownloadGPX={() => downloadBlob(new Blob([toGPX(route.coords, fileName)], { type: 'application/gpx+xml' }), `${slug(fileName)}.gpx`)}
