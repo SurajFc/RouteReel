@@ -6,7 +6,7 @@ Runs entirely in the browser. No API keys, no backend.
 
 ## Features
 
-- **Routes**: search places (start, stops, destination), click points on the map, use the locate button to start from where you are right now, or import GPX, KML, or GeoJSON. "Follow roads" snaps to real roads; turn it off for straight lines, hikes, or flights. The start and destination fields show their resolved coordinates underneath.
+- **Routes**: search places (start, stops, destination), click points on the map, use the locate button to start from where you are right now, or import GPX, KML, or GeoJSON. "Follow roads" snaps to real roads; turn it off for straight lines, hikes, or flights. The start and destination fields show their resolved coordinates underneath. With more than two points, drag the handle on any row to reorder them.
 - **Route alternatives**: when OSRM finds more than one road option between a start and destination, they're listed as chips (distance + time) so you can pick between them.
 - **Templates**: Cinematic 3D, Night ride, Travel vlog (satellite), Clean top-down, Road trip map. A template changes the look and camera, never your route or title.
 - **Vehicles**: motorbike, car, bicycle, truck, or a dot. Any color, any size. They turn with the road.
