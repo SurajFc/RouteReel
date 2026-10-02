@@ -63,6 +63,8 @@ Export does not screen-record. It steps through the timeline one frame at a time
 
 That's why exports are smooth even on a slow connection, and why rendering can take longer than the video itself. GIFs are the slowest, since every frame is color-quantized.
 
+Before stepping through frames, a quick pass scrubs the whole camera path once to pre-load its map tiles. Without it, the first frame to pan into a new area of the map would block on that same tile fetch — pre-warming the cache up front means the real capture pass isn't the one waiting on the network.
+
 MP4 and WebM bitrate tapers off as resolution climbs rather than scaling 1:1 with pixel count — map graphics and camera motion compress far better than real footage, so a 4K export doesn't balloon to 50+ MB/min the way a naive bits-per-pixel formula would. The size estimate in the Export panel reflects this.
 
 Browsers without WebCodecs fall back to real-time recording with MediaRecorder (MP4 where supported, otherwise WebM). Convert WebM with:
@@ -104,7 +106,7 @@ src/
 | Vector maps | OpenFreeMap, CARTO | Free, keyless |
 | Satellite | Esri World Imagery | Check Esri's terms before commercial use |
 | Routing | routing.openstreetmap.de (OSRM) | Public demo server, fair-use only |
-| Search & geolocation | Photon by Komoot | Public server, fair-use only. Powers both place search and reverse-geocoding your browser location for "use my location" |
+| Search | Photon by Komoot | Public server, fair-use only. "Use my location" reads coordinates straight from the browser, no server round trip |
 
 Fine for personal projects and videos. If you ship this to many users, self-host OSRM and Photon, or swap in Mapbox or Google in `lib/routing.js` and `lib/presets.js`.
 

@@ -5,7 +5,7 @@ const CREDITS = [
   { name: 'OpenFreeMap', note: 'streets, bright, and light map styles' },
   { name: 'CARTO', note: 'dark map style' },
   { name: 'Esri, Maxar, Earthstar Geographics', note: 'satellite imagery' },
-  { name: 'Photon (by Komoot)', note: 'place search and location lookup' },
+  { name: 'Photon (by Komoot)', note: 'place search' },
   { name: 'Project OSRM', note: 'road routing' },
 ];
 
