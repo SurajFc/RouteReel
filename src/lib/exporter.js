@@ -90,7 +90,11 @@ export async function encodeVideo({ format, codec, muxCodec, width, height, fps,
     error: (e) => (encodeError = e),
   });
   const bitrate = videoBitrate(format, width, height, fps);
-  encoder.configure({ codec, width, height, framerate: fps, bitrate, latencyMode: 'quality' });
+  // 'realtime' trades a little compression efficiency for noticeably faster
+  // encoding; since export isn't actually realtime here, this just means the
+  // encoder spends less effort optimizing each frame, not that quality drops
+  // visibly at these bitrates.
+  encoder.configure({ codec, width, height, framerate: fps, bitrate, latencyMode: 'realtime' });
 
   const step = 1e6 / fps;
   const finished = await eachFrame({ fps, holdSeconds: 0.5, ...loop }, async (canvas, i) => {

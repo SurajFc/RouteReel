@@ -65,6 +65,8 @@ That's why exports are smooth even on a slow connection, and why rendering can t
 
 MP4 and WebM bitrate tapers off as resolution climbs rather than scaling 1:1 with pixel count — map graphics and camera motion compress far better than real footage, so a 4K export doesn't balloon to 50+ MB/min the way a naive bits-per-pixel formula would. The size estimate in the Export panel reflects this.
 
+Both also encode with `latencyMode: 'realtime'`, which trades a little compression efficiency for noticeably faster encoding. Export isn't actually realtime here, so this just means less effort spent optimizing each frame — not a visible quality drop at the bitrates above.
+
 Browsers without WebCodecs fall back to real-time recording with MediaRecorder (MP4 where supported, otherwise WebM). Convert WebM with:
 
 ```bash
