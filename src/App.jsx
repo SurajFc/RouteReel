@@ -183,6 +183,15 @@ export default function App() {
     setWaypoints(next);
     if (next.filter((w) => w.coord).length >= 2) buildRoute(next);
   };
+  const moveWaypoint = (from, to) => {
+    if (from === to) return;
+    const next = [...waypoints];
+    const [item] = next.splice(from, 1);
+    next.splice(to, 0, item);
+    setWaypoints(next);
+    if (next.filter((w) => w.coord).length >= 2) buildRoute(next);
+  };
+
   const reverse = () => {
     const next = [...waypoints].reverse();
     setWaypoints(next);
@@ -306,6 +315,7 @@ export default function App() {
         waypoints={waypoints}
         setWaypoint={setWaypoint}
         addStop={addStop}
+        moveWaypoint={moveWaypoint}
         removeStop={removeStop}
         reverse={reverse}
         followRoads={followRoads}

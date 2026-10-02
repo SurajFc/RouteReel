@@ -1,5 +1,4 @@
-import { Muxer as Mp4Muxer, ArrayBufferTarget as Mp4Target } from 'mp4-muxer';
-import { Muxer as WebmMuxer, ArrayBufferTarget as WebmTarget } from 'webm-muxer';
+import { Output, Mp4OutputFormat, WebMOutputFormat, BufferTarget, CanvasSource, Quality, getFirstEncodableVideoCodec } from 'mediabunny';
 import { GIFEncoder, quantize, applyPalette } from 'gifenc';
 
 export const FORMATS = {
@@ -8,29 +7,20 @@ export const FORMATS = {
   gif: { label: 'GIF', ext: 'gif', mime: 'image/gif', hint: 'Loops anywhere, no sound. Keep it short and small, big GIFs get huge.' },
 };
 
-const VIDEO_CODECS = {
-  mp4: { muxCodec: 'avc', candidates: ['avc1.640034', 'avc1.640033', 'avc1.64002A', 'avc1.4D0033', 'avc1.42003E'] },
-  webm: {
-    muxCodec: 'V_VP9',
-    candidates: ['vp09.00.51.08', 'vp09.00.41.08', 'vp09.00.31.08'],
-    fallback: { muxCodec: 'V_VP8', candidates: ['vp8'] },
-  },
-};
+const outputFormatFor = (format) => (format === 'mp4' ? new Mp4OutputFormat() : new WebMOutputFormat());
 
-/** Returns { codec, muxCodec } the browser can encode at this size, or null. */
+/** Returns the video codec the browser can encode at this size, or null. */
 export async function videoCodecFor(format, width, height, fps) {
-  if (typeof VideoEncoder === 'undefined' || typeof VideoFrame === 'undefined') return null;
-  for (let spec = VIDEO_CODECS[format]; spec; spec = spec.fallback) {
-    for (const codec of spec.candidates) {
-      try {
-        const { supported } = await VideoEncoder.isConfigSupported({ codec, width, height, framerate: fps, bitrate: 20_000_000 });
-        if (supported) return { codec, muxCodec: spec.muxCodec };
-      } catch {
-        /* try next */
-      }
-    }
+  if (typeof VideoEncoder === 'undefined') return null;
+  try {
+    return await getFirstEncodableVideoCodec(outputFormatFor(format).getSupportedVideoCodecs(), {
+      width,
+      height,
+      bitrate: videoBitrate(format, width, height, fps),
+    });
+  } catch {
+    return null;
   }
-  return null;
 }
 
 // Wait until the map has painted this camera and every visible tile is loaded
@@ -51,25 +41,6 @@ export function waitForMap(map, timeout = 6000) {
 }
 
 const yieldToUI = () => new Promise((r) => setTimeout(r, 0));
-
-/**
- * Scrubs the camera path once, coarsely, before the real capture pass.
- * Frame-by-frame export otherwise re-discovers this same tile-loading
- * latency on every single frame (waitForMap blocks on it each time), and
- * real-time recording has no way to wait at all, so a cold cache shows up
- * as stutter in the captured video. A handful of samples is enough since
- * nearby frames share most of the same visible tiles.
- */
-export async function prewarmTiles({ map, anim, totalTime, onProgress, isCancelled }) {
-  const steps = Math.min(32, Math.max(8, Math.round(totalTime * 2)));
-  for (let i = 0; i <= steps; i++) {
-    if (isCancelled()) return false;
-    anim.seek((i / steps) * totalTime);
-    await waitForMap(map);
-    onProgress?.((i + 1) / (steps + 1));
-  }
-  return true;
-}
 
 /**
  * Steps through the timeline one frame at a time (not in real time) so every
@@ -97,38 +68,33 @@ function videoBitrate(format, width, height, fps) {
   return Math.round(width * height * fps * bppBase * scale);
 }
 
-export async function encodeVideo({ format, codec, muxCodec, width, height, fps, ...loop }) {
-  const muxer =
-    format === 'mp4'
-      ? new Mp4Muxer({ target: new Mp4Target(), video: { codec: muxCodec, width, height, frameRate: fps }, fastStart: 'in-memory' })
-      : new WebmMuxer({ target: new WebmTarget(), video: { codec: muxCodec, width, height, frameRate: fps } });
-
-  let encodeError = null;
-  const encoder = new VideoEncoder({
-    output: (chunk, meta) => muxer.addVideoChunk(chunk, meta),
-    error: (e) => (encodeError = e),
-  });
+export async function encodeVideo({ format, codec, width, height, fps, ...loop }) {
+  const output = new Output({ format: outputFormatFor(format), target: new BufferTarget() });
   const bitrate = videoBitrate(format, width, height, fps);
-  encoder.configure({ codec, width, height, framerate: fps, bitrate, latencyMode: 'quality' });
+  const step = 1 / fps;
 
-  const step = 1e6 / fps;
+  // CanvasSource is built from the first frame so it reads from the actual
+  // canvas renderFrame draws into (same canvas reused every frame).
+  let videoSource = null;
   const finished = await eachFrame({ fps, holdSeconds: 0.5, ...loop }, async (canvas, i) => {
-    if (encodeError) throw encodeError;
-    const frame = new VideoFrame(canvas, { timestamp: Math.round(i * step), duration: Math.round(step) });
-    encoder.encode(frame, { keyFrame: i % (fps * 2) === 0 });
-    frame.close();
-    while (encoder.encodeQueueSize > 8) await new Promise((r) => setTimeout(r, 5));
+    if (!videoSource) {
+      // 'realtime' trades a little compression efficiency for noticeably
+      // faster encoding; since export isn't actually realtime here, this
+      // just means less effort spent optimizing each frame, not a visible
+      // quality drop at these bitrates.
+      videoSource = new CanvasSource(canvas, { codec, quality: new Quality({ bitrate }), latencyMode: 'realtime' });
+      output.addVideoTrack(videoSource);
+      await output.start();
+    }
+    await videoSource.add(i * step, step, { keyFrame: i % (fps * 2) === 0 });
   });
 
   if (!finished) {
-    encoder.close();
+    await output.cancel();
     return null;
   }
-  await encoder.flush();
-  encoder.close();
-  if (encodeError) throw encodeError;
-  muxer.finalize();
-  return new Blob([muxer.target.buffer], { type: FORMATS[format].mime });
+  await output.finalize();
+  return new Blob([output.target.buffer], { type: FORMATS[format].mime });
 }
 
 export async function encodeGif({ width, height, fps, ...loop }) {

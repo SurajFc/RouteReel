@@ -6,7 +6,7 @@ Runs entirely in the browser. No API keys, no backend.
 
 ## Features
 
-- **Routes**: search places (start, stops, destination), click points on the map, use the locate button to start from where you are right now, or import GPX, KML, or GeoJSON. "Follow roads" snaps to real roads; turn it off for straight lines, hikes, or flights. The start and destination fields show their resolved coordinates underneath.
+- **Routes**: search places (start, stops, destination), click points on the map, use the locate button to start from where you are right now, or import GPX, KML, or GeoJSON. "Follow roads" snaps to real roads; turn it off for straight lines, hikes, or flights. The start and destination fields show their resolved coordinates underneath. With more than two points, drag the handle on any row to reorder them.
 - **Route alternatives**: when OSRM finds more than one road option between a start and destination, they're listed as chips (distance + time) so you can pick between them.
 - **Templates**: Cinematic 3D, Night ride, Travel vlog (satellite), Clean top-down, Road trip map. A template changes the look and camera, never your route or title.
 - **Vehicles**: motorbike, car, bicycle, truck, or a dot. Any color, any size. They turn with the road.
@@ -57,15 +57,14 @@ npx netlify deploy --prod
 
 Export does not screen-record. It steps through the timeline one frame at a time, waits until every map tile for that frame has loaded, draws the overlay on top, and hands the frame to an encoder:
 
-- MP4: WebCodecs H.264 into `mp4-muxer`
-- WebM: WebCodecs VP9 into `webm-muxer`
+- MP4/WebM: WebCodecs via [`mediabunny`](https://github.com/Vanilagy/mediabunny), which picks the best codec the browser can encode and writes the container
 - GIF: `gifenc`, with a fresh 256-color palette per frame so map colors stay accurate
 
 That's why exports are smooth even on a slow connection, and why rendering can take longer than the video itself. GIFs are the slowest, since every frame is color-quantized.
 
-Before stepping through frames, a quick pass scrubs the whole camera path once to pre-load its map tiles. Without it, the first frame to pan into a new area of the map would block on that same tile fetch — pre-warming the cache up front means the real capture pass isn't the one waiting on the network.
-
 MP4 and WebM bitrate tapers off as resolution climbs rather than scaling 1:1 with pixel count — map graphics and camera motion compress far better than real footage, so a 4K export doesn't balloon to 50+ MB/min the way a naive bits-per-pixel formula would. The size estimate in the Export panel reflects this.
+
+Both also encode with `latencyMode: 'realtime'`, which trades a little compression efficiency for noticeably faster encoding. Export isn't actually realtime here, so this just means less effort spent optimizing each frame — not a visible quality drop at the bitrates above.
 
 Browsers without WebCodecs fall back to real-time recording with MediaRecorder (MP4 where supported, otherwise WebM). Convert WebM with:
 

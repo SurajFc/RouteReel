@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { PlaceInput } from './PlaceInput';
 import { VEHICLES, vehicleDataURL } from '../lib/vehicles';
 import { MAP_STYLES, TEMPLATES, SAMPLE_ROUTES, SWATCHES, ASPECTS } from '../lib/presets';
@@ -87,7 +87,7 @@ function ColorPick({ value, onChange, label }) {
 
 export function Sidebar({
   settings, set, applyTemplate,
-  waypoints, setWaypoint, addStop, removeStop, reverse,
+  waypoints, setWaypoint, addStop, removeStop, reverse, moveWaypoint,
   followRoads, setFollowRoads, pickMode, setPickMode,
   buildRoute, loadSample, importFile, building, message, route,
   routeOptions, routeChoice, chooseRoute,
@@ -95,6 +95,8 @@ export function Sidebar({
 }) {
   const fileRef = useRef(null);
   const projectRef = useRef(null);
+  const dragFrom = useRef(null);
+  const [dragOver, setDragOver] = useState(null);
   const s = settings;
   const follow = s.camera.mode === 'follow';
 
@@ -110,8 +112,49 @@ export function Sidebar({
         <div className="waypoints">
           {waypoints.map((w, i) => {
             const last = i === waypoints.length - 1;
+            const draggable = waypoints.length > 2;
             return (
-              <div className="wp-row" key={w.id}>
+              <div
+                className={`wp-row ${dragOver === i ? 'drag-over' : ''}`}
+                key={w.id}
+                onDragOver={(e) => {
+                  if (dragFrom.current === null) return;
+                  e.preventDefault();
+                  setDragOver(i);
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  if (dragFrom.current !== null) moveWaypoint(dragFrom.current, i);
+                  dragFrom.current = null;
+                  setDragOver(null);
+                }}
+              >
+                {draggable && (
+                  <span
+                    className="wp-handle"
+                    draggable
+                    onDragStart={(e) => {
+                      dragFrom.current = i;
+                      e.dataTransfer.effectAllowed = 'move';
+                      e.dataTransfer.setDragImage(e.currentTarget.closest('.wp-row'), 14, 18);
+                    }}
+                    onDragEnd={() => {
+                      dragFrom.current = null;
+                      setDragOver(null);
+                    }}
+                    aria-hidden="true"
+                    title="Drag to reorder"
+                  >
+                    <svg viewBox="0 0 10 16" width="10" height="16" fill="currentColor" aria-hidden="true">
+                      <circle cx="2.5" cy="2.5" r="1.4" />
+                      <circle cx="7.5" cy="2.5" r="1.4" />
+                      <circle cx="2.5" cy="8" r="1.4" />
+                      <circle cx="7.5" cy="8" r="1.4" />
+                      <circle cx="2.5" cy="13.5" r="1.4" />
+                      <circle cx="7.5" cy="13.5" r="1.4" />
+                    </svg>
+                  </span>
+                )}
                 <PlaceInput
                   value={w.label}
                   marker={i === 0 ? 'A' : last ? 'B' : i}

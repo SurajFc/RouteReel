@@ -164,7 +164,18 @@ button, input, select { font: inherit; color: inherit; }
 .waypoints { display: grid; gap: 6px; position: relative; }
 .wp-coords { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: -2px; }
 .wp-coord { font-family: ui-monospace, "SF Mono", Consolas, monospace; font-size: 11.5px; color: var(--muted); }
-.wp-row { display: flex; gap: 4px; align-items: stretch; }
+.wp-row { display: flex; gap: 4px; align-items: stretch; border-radius: var(--radius); transition: background 0.1s; }
+.wp-row.drag-over { background: var(--kerb-soft); }
+.wp-handle {
+  flex: none;
+  width: 16px;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  cursor: grab;
+  touch-action: none;
+}
+.wp-handle:active { cursor: grabbing; }
 .place { position: relative; flex: 1; }
 .place-marker {
   position: absolute;
