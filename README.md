@@ -104,7 +104,7 @@ src/
 | Vector maps | OpenFreeMap, CARTO | Free, keyless |
 | Satellite | Esri World Imagery | Check Esri's terms before commercial use |
 | Routing | routing.openstreetmap.de (OSRM) | Public demo server, fair-use only |
-| Search & geolocation | Photon by Komoot | Public server, fair-use only. Powers both place search and reverse-geocoding your browser location for "use my location" |
+| Search | Photon by Komoot | Public server, fair-use only. "Use my location" reads coordinates straight from the browser, no server round trip |
 
 Fine for personal projects and videos. If you ship this to many users, self-host OSRM and Photon, or swap in Mapbox or Google in `lib/routing.js` and `lib/presets.js`.
 

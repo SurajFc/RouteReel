@@ -39,16 +39,6 @@ export async function geocode(query, signal) {
   });
 }
 
-export async function reverseGeocode([lon, lat], signal) {
-  const url = `https://photon.komoot.io/reverse?lon=${lon}&lat=${lat}`;
-  const res = await fetch(url, { signal });
-  if (!res.ok) return null;
-  const json = await res.json();
-  const p = json.features?.[0]?.properties;
-  if (!p) return null;
-  return [p.name, p.city !== p.name ? p.city : null, p.state, p.country].filter(Boolean).join(', ') || null;
-}
-
 export function locateMe() {
   return new Promise((resolve, reject) => {
     if (!navigator.geolocation) {

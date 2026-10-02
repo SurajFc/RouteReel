@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { geocode, locateMe, reverseGeocode } from '../lib/routing';
+import { geocode, locateMe } from '../lib/routing';
 
 // Lets people paste coordinates straight from Google Maps etc ("27.657276,
 // 85.504433") instead of only searching by place name.
@@ -53,18 +53,10 @@ export function PlaceInput({ value, placeholder, onSelect, marker, locate = fals
     return () => clearTimeout(id);
   }, [text]);
 
-  const choose = async (r) => {
+  const choose = (r) => {
     typedRef.current = false;
-    setOpen(false);
-    if (r.isCoord) {
-      setText(r.label); // show the typed coordinates immediately while a name is looked up
-      const name = await reverseGeocode(r.coord).catch(() => null);
-      const resolved = name ? { label: name, coord: r.coord } : r;
-      setText(resolved.label);
-      onSelect(resolved);
-      return;
-    }
     setText(r.label);
+    setOpen(false);
     onSelect(r);
   };
 
@@ -73,8 +65,7 @@ export function PlaceInput({ value, placeholder, onSelect, marker, locate = fals
     setLocating(true);
     try {
       const coord = await locateMe();
-      const name = await reverseGeocode(coord).catch(() => null);
-      choose({ label: name || `${coord[1].toFixed(4)}, ${coord[0].toFixed(4)}`, coord });
+      choose({ label: `${coord[1].toFixed(5)}, ${coord[0].toFixed(5)}`, coord });
     } catch (err) {
       setLocateError(err.message);
     } finally {
