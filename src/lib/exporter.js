@@ -53,25 +53,6 @@ export function waitForMap(map, timeout = 6000) {
 const yieldToUI = () => new Promise((r) => setTimeout(r, 0));
 
 /**
- * Scrubs the camera path once, coarsely, before the real capture pass.
- * Frame-by-frame export otherwise re-discovers this same tile-loading
- * latency on every single frame (waitForMap blocks on it each time), and
- * real-time recording has no way to wait at all, so a cold cache shows up
- * as stutter in the captured video. A handful of samples is enough since
- * nearby frames share most of the same visible tiles.
- */
-export async function prewarmTiles({ map, anim, totalTime, onProgress, isCancelled }) {
-  const steps = Math.min(32, Math.max(8, Math.round(totalTime * 2)));
-  for (let i = 0; i <= steps; i++) {
-    if (isCancelled()) return false;
-    anim.seek((i / steps) * totalTime);
-    await waitForMap(map);
-    onProgress?.((i + 1) / (steps + 1));
-  }
-  return true;
-}
-
-/**
  * Steps through the timeline one frame at a time (not in real time) so every
  * frame is fully loaded, then hands each frame to the chosen encoder.
  */

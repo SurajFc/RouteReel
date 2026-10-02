@@ -4,7 +4,7 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import { RouteAnimator } from '../lib/animator';
 import { MAP_STYLES, ASPECTS } from '../lib/presets';
 import { drawHud, startRecording } from '../lib/recorder';
-import { FORMATS, encodeGif, encodeVideo, videoCodecFor, waitForMap, prewarmTiles } from '../lib/exporter';
+import { FORMATS, encodeGif, encodeVideo, videoCodecFor, waitForMap } from '../lib/exporter';
 import { formatTime } from '../lib/geo';
 import { downloadBlob, slug } from '../lib/importers';
 
@@ -225,15 +225,6 @@ export const Stage = forwardRef(function Stage({ settings, coords, waypoints, pi
 
     try {
       const blob = await withExportSize(resolution, async ({ map, anim, W, H, comp, compose }) => {
-        const warmed = await prewarmTiles({
-          map,
-          anim,
-          totalTime: anim.totalTime,
-          onProgress: (p) => setExporting({ progress: p, label: 'Loading map tiles' }),
-          isCancelled: () => cancelRef.current,
-        });
-        if (!warmed) return null;
-
         const loop = {
           fps,
           totalTime: anim.totalTime,
