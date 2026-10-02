@@ -236,6 +236,14 @@ button, input, select { font: inherit; color: inherit; }
 }
 .suggest li { padding: 7px 9px; border-radius: 4px; cursor: pointer; font-size: 13px; }
 .suggest li.active, .suggest li:hover { background: var(--kerb-soft); }
+.suggest-hint {
+  display: block;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--paint);
+  margin-bottom: 1px;
+}
 .field { display: grid; gap: 6px; }
 
 .msg { margin: 0; font-size: 13px; }
