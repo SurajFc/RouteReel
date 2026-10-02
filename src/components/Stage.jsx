@@ -240,7 +240,7 @@ export const Stage = forwardRef(function Stage({ settings, coords, waypoints, pi
         if (gif) return encodeGif({ width: W, height: H, ...loop });
 
         const codec = await videoCodecFor(format, W, H, fps);
-        if (codec) return encodeVideo({ format, ...codec, width: W, height: H, ...loop });
+        if (codec) return encodeVideo({ format, codec, width: W, height: H, ...loop });
 
         // Fallback for browsers without WebCodecs: record in real time
         anim.seek(0);

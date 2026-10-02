@@ -57,8 +57,7 @@ npx netlify deploy --prod
 
 Export does not screen-record. It steps through the timeline one frame at a time, waits until every map tile for that frame has loaded, draws the overlay on top, and hands the frame to an encoder:
 
-- MP4: WebCodecs H.264 into `mp4-muxer`
-- WebM: WebCodecs VP9 into `webm-muxer`
+- MP4/WebM: WebCodecs via [`mediabunny`](https://github.com/Vanilagy/mediabunny), which picks the best codec the browser can encode and writes the container
 - GIF: `gifenc`, with a fresh 256-color palette per frame so map colors stay accurate
 
 That's why exports are smooth even on a slow connection, and why rendering can take longer than the video itself. GIFs are the slowest, since every frame is color-quantized.
