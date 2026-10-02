@@ -1,6 +1,18 @@
 import { useEffect, useRef, useState } from 'react';
 import { geocode, locateMe, reverseGeocode } from '../lib/routing';
 
+// Lets people paste coordinates straight from Google Maps etc ("27.657276,
+// 85.504433") instead of only searching by place name.
+const COORD_RE = /^(-?\d{1,3}(?:\.\d+)?)\s*[,\s]\s*(-?\d{1,3}(?:\.\d+)?)$/;
+function parseCoordText(text) {
+  const m = text.trim().match(COORD_RE);
+  if (!m) return null;
+  const lat = Number(m[1]);
+  const lng = Number(m[2]);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) return null;
+  return [lng, lat];
+}
+
 export function PlaceInput({ value, placeholder, onSelect, marker, locate = false }) {
   const [text, setText] = useState(value || '');
   const [results, setResults] = useState([]);
@@ -16,6 +28,13 @@ export function PlaceInput({ value, placeholder, onSelect, marker, locate = fals
   useEffect(() => {
     if (!typedRef.current || text.trim().length < 3) {
       setResults([]);
+      return;
+    }
+    const coord = parseCoordText(text);
+    if (coord) {
+      setResults([{ label: text.trim(), coord, isCoord: true }]);
+      setActive(0);
+      setOpen(true);
       return;
     }
     const id = setTimeout(async () => {
@@ -34,10 +53,18 @@ export function PlaceInput({ value, placeholder, onSelect, marker, locate = fals
     return () => clearTimeout(id);
   }, [text]);
 
-  const choose = (r) => {
+  const choose = async (r) => {
     typedRef.current = false;
-    setText(r.label);
     setOpen(false);
+    if (r.isCoord) {
+      setText(r.label); // show the typed coordinates immediately while a name is looked up
+      const name = await reverseGeocode(r.coord).catch(() => null);
+      const resolved = name ? { label: name, coord: r.coord } : r;
+      setText(resolved.label);
+      onSelect(resolved);
+      return;
+    }
+    setText(r.label);
     onSelect(r);
   };
 
@@ -103,7 +130,14 @@ export function PlaceInput({ value, placeholder, onSelect, marker, locate = fals
               className={i === active ? 'active' : ''}
               onMouseDown={() => choose(r)}
             >
-              {r.label}
+              {r.isCoord ? (
+                <>
+                  <span className="suggest-hint">Use coordinates</span>
+                  {r.label}
+                </>
+              ) : (
+                r.label
+              )}
             </li>
           ))}
         </ul>
