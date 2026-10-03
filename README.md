@@ -20,7 +20,7 @@ Runs entirely in the browser. No API keys, no backend.
   - **WebM** (VP9, falls back to VP8). Smaller files for the web.
   - **GIF** at 360p, 480p or 640p, 10 to 20 fps, looping. The panel shows an estimated file size and warns when a GIF is going to be heavy.
   - **PNG** still of the current frame, plus **GPX**, **GeoJSON**, and **project files** you can reopen later.
-  - Every format supports 16:9, 9:16 (Shorts/Reels), 1:1 and 4:5.
+  - Every format supports 16:9 (YouTube, Facebook, websites), 9:16 (Instagram/YouTube Shorts, Reels, TikTok, Snapchat), 1:1 (Instagram/Facebook feed, Twitter/X) and 4:5 (Instagram/Facebook feed, portrait).
 
 ## Run it
 
@@ -80,9 +80,9 @@ Best results: Chrome or Edge on desktop. Safari 16.4+ and Firefox 130+ also have
 Pick a soundtrack in the Music panel (MP4/WebM exports only — GIFs are silent). Two ways to get one in:
 
 - **Upload your own** — any audio file your browser can decode (MP3, WAV, M4A, OGG...). Nothing is uploaded anywhere; it's decoded and mixed entirely client-side.
-- **Library** — search [Wikimedia Commons](https://commons.wikimedia.org) for freely-licensed audio straight from the sidebar, or pick from a curated list if one's been added (see below). No API key, no backend: it's a plain keyless request to Commons' public search API, filtered to audio files, run from your browser when you hit Search.
+- **Library** — search [Wikimedia Commons](https://commons.wikimedia.org) for freely-licensed audio straight from the sidebar, or pick from a curated list if one's been added (see below). No API key, no backend: it's a plain keyless request to Commons' public search API, filtered to audio files, run from your browser when you hit Search. Each result has an inline player to preview it before you commit — nothing opens in a new tab.
 
-Commons is used instead of a bundled track list because every file there carries a real, checkable license in its description page (linked from each result) — the artist and license shown next to a result come straight from that metadata, not from guesswork. It's still worth reading the license on a track before publishing a video with it, especially for anything requiring attribution (most CC-BY tracks do); the result's name links to its Commons page for that.
+Commons is used instead of a bundled track list because every file there carries a real, checkable license in its description page — the artist and license shown next to a result come straight from that metadata, not from guesswork. It's still worth reading the license on a track before publishing a video with it, especially for anything requiring attribution (most CC-BY tracks do); the small "source" link next to each result's license opens its Commons page for that.
 
 You can also pin your own vetted tracks so they show up without a search:
 
