@@ -2,7 +2,7 @@ import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useSta
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { RouteAnimator } from '../lib/animator';
-import { MAP_STYLES, ASPECTS, MUSIC_TRACKS } from '../lib/presets';
+import { MAP_STYLES, ASPECTS } from '../lib/presets';
 import { drawHud, startRecording } from '../lib/recorder';
 import { FORMATS, encodeGif, encodeVideo, videoCodecFor, audioCodecFor, waitForMap } from '../lib/exporter';
 import { decodeAudioFile, decodeAudioUrl, fitAudioToDuration } from '../lib/audio';
@@ -231,8 +231,8 @@ export const Stage = forwardRef(function Stage({ settings, coords, waypoints, pi
         const raw =
           s.music.source === 'custom' && musicFile
             ? await decodeAudioFile(musicFile)
-            : s.music.source === 'library' && s.music.trackId
-            ? await decodeAudioUrl(MUSIC_TRACKS.find((t) => t.id === s.music.trackId)?.url)
+            : s.music.source === 'library' && s.music.trackUrl
+            ? await decodeAudioUrl(s.music.trackUrl)
             : null;
         if (raw) {
           audioBuffer = await fitAudioToDuration(raw, animRef.current.totalTime, {

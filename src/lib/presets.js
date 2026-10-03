@@ -49,10 +49,12 @@ export const ASPECTS = {
 };
 
 // Ships empty on purpose: bundling someone else's audio needs its actual
-// license checked, not assumed. Add your own royalty-free/CC0/CC-BY tracks
-// by dropping the file in public/music/ and adding an entry here — see the
-// Music section in the README for the exact format and a note on the few
-// sources that are genuinely safe to pull from.
+// license checked, not assumed. The Music panel's "Library" tab searches
+// Wikimedia Commons live instead (every result there carries a checkable
+// license), so this static list is only for tracks you've personally
+// vetted and want pinned without a search. Add your own by dropping the
+// file in public/music/ and adding an entry here — see the Music section
+// in the README for the exact format.
 export const MUSIC_TRACKS = [];
 
 export const DEFAULT_SETTINGS = {
@@ -64,7 +66,18 @@ export const DEFAULT_SETTINGS = {
   duration: 20,
   easing: true,
   hud: { show: true, title: '', stats: true, units: 'km' },
-  music: { source: 'none', trackId: null, fileName: null, volume: 70, loop: true, fadeOut: true },
+  music: {
+    source: 'none',
+    trackId: null,
+    fileName: null,
+    trackUrl: null,
+    trackName: null,
+    trackArtist: null,
+    trackLicense: null,
+    volume: 70,
+    loop: true,
+    fadeOut: true,
+  },
   aspect: '16:9',
   format: 'mp4',
   resolution: 1080,

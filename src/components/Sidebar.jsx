@@ -4,6 +4,7 @@ import { VEHICLES, vehicleDataURL } from '../lib/vehicles';
 import { MAP_STYLES, TEMPLATES, SAMPLE_ROUTES, SWATCHES, ASPECTS, MUSIC_TRACKS } from '../lib/presets';
 import { formatDistance, formatDuration } from '../lib/geo';
 import { FORMATS, estimateSize, formatBytes } from '../lib/exporter';
+import { searchCommonsAudio } from '../lib/audio';
 
 function exportPlan(s) {
   const gif = s.format === 'gif';
@@ -100,8 +101,37 @@ export function Sidebar({
   const musicRef = useRef(null);
   const dragFrom = useRef(null);
   const [dragOver, setDragOver] = useState(null);
+  const [musicQuery, setMusicQuery] = useState('');
+  const [musicResults, setMusicResults] = useState([]);
+  const [musicSearching, setMusicSearching] = useState(false);
+  const [musicSearchError, setMusicSearchError] = useState(null);
   const s = settings;
   const follow = s.camera.mode === 'follow';
+
+  function selectTrack(t) {
+    set('music.trackId', t.id);
+    set('music.trackUrl', t.url);
+    set('music.trackName', t.name);
+    set('music.trackArtist', t.artist ?? null);
+    set('music.trackLicense', t.license ?? null);
+  }
+
+  async function runMusicSearch() {
+    const query = musicQuery.trim();
+    if (!query) return;
+    setMusicSearching(true);
+    setMusicSearchError(null);
+    try {
+      const found = await searchCommonsAudio(query);
+      setMusicResults(found);
+      if (found.length === 0) setMusicSearchError('No audio found for that search — try a different word.');
+    } catch (err) {
+      setMusicResults([]);
+      setMusicSearchError(err.message || 'Search failed.');
+    } finally {
+      setMusicSearching(false);
+    }
+  }
 
   return (
     <aside className="sidebar">
@@ -309,22 +339,69 @@ export function Sidebar({
         />
 
         {s.music.source === 'library' && (
-          MUSIC_TRACKS.length === 0 ? (
-            <p className="hint">No tracks added yet. See the README for how to add royalty-free music.</p>
-          ) : (
-            <div className="samples">
-              {MUSIC_TRACKS.map((t) => (
-                <button
-                  key={t.id}
-                  className={`chip ${s.music.trackId === t.id ? 'on' : ''}`}
-                  onClick={() => set('music.trackId', t.id)}
-                  title={t.license}
-                >
-                  {t.name}
-                </button>
-              ))}
+          <>
+            {MUSIC_TRACKS.length > 0 && (
+              <div className="samples">
+                {MUSIC_TRACKS.map((t) => (
+                  <button
+                    key={t.id}
+                    className={`chip ${s.music.trackId === t.id ? 'on' : ''}`}
+                    onClick={() => selectTrack(t)}
+                    title={t.license}
+                  >
+                    {t.name}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            <div className="btn-row">
+              <label className="field grow">
+                <input
+                  type="text"
+                  value={musicQuery}
+                  onChange={(e) => setMusicQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      runMusicSearch();
+                    }
+                  }}
+                  placeholder="Search free audio (Wikimedia Commons)"
+                />
+              </label>
+              <button className="btn ghost small" onClick={runMusicSearch} disabled={musicSearching || !musicQuery.trim()}>
+                {musicSearching ? 'Searching…' : 'Search'}
+              </button>
             </div>
-          )
+
+            {musicSearchError && <p className="hint">{musicSearchError}</p>}
+
+            {musicResults.length > 0 && (
+              <div className="track-results">
+                {musicResults.map((t) => (
+                  <div key={t.id} className="track-result">
+                    <div className="track-result-info">
+                      <a className="track-result-name" href={t.pageUrl} target="_blank" rel="noreferrer" title="View on Wikimedia Commons">
+                        {t.name}
+                      </a>
+                      <span className="track-result-meta">{t.artist} · {t.license}</span>
+                    </div>
+                    <button
+                      className={`btn ghost small ${s.music.trackId === t.id ? 'active' : ''}`}
+                      onClick={() => selectTrack(t)}
+                    >
+                      {s.music.trackId === t.id ? 'Selected' : 'Use'}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {MUSIC_TRACKS.length === 0 && musicResults.length === 0 && !musicSearchError && (
+              <p className="hint">Search Wikimedia Commons above for freely-licensed audio — every result shows its license.</p>
+            )}
+          </>
         )}
 
         {s.music.source === 'custom' && (

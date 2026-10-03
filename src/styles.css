@@ -257,6 +257,31 @@ button, input, select { font: inherit; color: inherit; }
   margin-bottom: 1px;
 }
 .field { display: grid; gap: 6px; }
+.field.grow { flex: 1; }
+
+.track-results { display: grid; gap: 6px; max-height: 220px; overflow-y: auto; }
+.track-result {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--kerb);
+  border-radius: var(--radius);
+  background: var(--asphalt-deep);
+}
+.track-result-info { display: grid; gap: 2px; min-width: 0; }
+.track-result-name {
+  color: var(--signal);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.track-result-name:hover { color: var(--paint); }
+.track-result-meta { color: var(--muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 .msg { margin: 0; font-size: 13px; }
 .msg.error { color: var(--error); }
