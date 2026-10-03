@@ -4,13 +4,14 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import { RouteAnimator } from '../lib/animator';
 import { MAP_STYLES, ASPECTS } from '../lib/presets';
 import { drawHud, startRecording } from '../lib/recorder';
-import { FORMATS, encodeGif, encodeVideo, videoCodecFor, waitForMap } from '../lib/exporter';
+import { FORMATS, encodeGif, encodeVideo, videoCodecFor, audioCodecFor, waitForMap } from '../lib/exporter';
+import { decodeAudioFile, decodeAudioUrl, fitAudioToDuration } from '../lib/audio';
 import { formatTime } from '../lib/geo';
 import { downloadBlob, slug } from '../lib/importers';
 
 const styleOf = (key) => (MAP_STYLES[key] || MAP_STYLES.streets).style;
 
-export const Stage = forwardRef(function Stage({ settings, coords, waypoints, pickMode, onPick, fileName, notify }, ref) {
+export const Stage = forwardRef(function Stage({ settings, coords, waypoints, pickMode, onPick, fileName, notify, musicFile }, ref) {
   const bodyRef = useRef(null);
   const mapEl = useRef(null);
   const overlayRef = useRef(null);
@@ -223,6 +224,28 @@ export const Stage = forwardRef(function Stage({ settings, coords, waypoints, pi
     const verb = gif ? 'Rendering GIF' : `Rendering ${FORMATS[format].label}`;
     setExporting({ progress: 0, label: 'Preparing' });
 
+    let audioBuffer = null;
+    if (!gif && s.music.source !== 'none') {
+      try {
+        setExporting({ progress: 0, label: 'Preparing audio' });
+        const raw =
+          s.music.source === 'custom' && musicFile
+            ? await decodeAudioFile(musicFile)
+            : s.music.source === 'library' && s.music.trackUrl
+            ? await decodeAudioUrl(s.music.trackUrl)
+            : null;
+        if (raw) {
+          audioBuffer = await fitAudioToDuration(raw, animRef.current.totalTime, {
+            loop: s.music.loop,
+            fadeOut: s.music.fadeOut,
+            volume: s.music.volume / 100,
+          });
+        }
+      } catch (err) {
+        console.warn('Music skipped:', err);
+      }
+    }
+
     try {
       const blob = await withExportSize(resolution, async ({ map, anim, W, H, comp, compose }) => {
         const loop = {
@@ -240,7 +263,15 @@ export const Stage = forwardRef(function Stage({ settings, coords, waypoints, pi
         if (gif) return encodeGif({ width: W, height: H, ...loop });
 
         const codec = await videoCodecFor(format, W, H, fps);
-        if (codec) return encodeVideo({ format, codec, width: W, height: H, ...loop });
+        const audioCodec = audioBuffer ? await audioCodecFor(format) : null;
+        if (codec) {
+          return encodeVideo({
+            format, codec, width: W, height: H,
+            audioBuffer: audioCodec ? audioBuffer : null,
+            audioCodec,
+            ...loop,
+          });
+        }
 
         // Fallback for browsers without WebCodecs: record in real time
         anim.seek(0);

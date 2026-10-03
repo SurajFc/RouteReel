@@ -13,6 +13,7 @@ Runs entirely in the browser. No API keys, no backend.
 - **Maps**: 3D streets with buildings, bright, light, dark, satellite.
 - **Camera**: chase cam with zoom, tilt and road-following rotation, or a fixed whole-route view. Drive time (5 to 120 seconds) is set automatically from the route's length each time you build one — short trips play quickly, long ones get more time, with diminishing returns so it never drags — and you can still fine-tune it by hand. Optional ease in and out. The camera fits tightly to the route, and an optional "Focus route" toggle dims the map so the trail and vehicle stay the visual focus.
 - **Overlay**: title card and a live distance counter (km or miles).
+- **Music**: upload your own audio file as a soundtrack, or search Wikimedia Commons for freely-licensed tracks right from the sidebar — no API key, no account. Volume, loop-to-fill, and fade-out controls either way. See [Music](#music) below. MP4/WebM only; GIFs have no sound.
 - **Interface**: light/dark theme (remembered across visits), a first-time tutorial (reopen anytime from the "?" button), and an About panel with credits, version, and license.
 - **Export formats**:
   - **MP4** (H.264) at 720p, 1080p, 1440p or 4K, 30 or 60 fps. Plays everywhere.
@@ -66,13 +67,36 @@ MP4 and WebM bitrate tapers off as resolution climbs rather than scaling 1:1 wit
 
 Both also encode with `latencyMode: 'realtime'`, which trades a little compression efficiency for noticeably faster encoding. Export isn't actually realtime here, so this just means less effort spent optimizing each frame — not a visible quality drop at the bitrates above.
 
-Browsers without WebCodecs fall back to real-time recording with MediaRecorder (MP4 where supported, otherwise WebM). Convert WebM with:
+Browsers without WebCodecs fall back to real-time recording with MediaRecorder (MP4 where supported, otherwise WebM). That fallback doesn't include a soundtrack — a live screen recording has no slot to mux a separate audio track into the way the frame-by-frame WebCodecs path does. Convert WebM with:
 
 ```bash
 ffmpeg -i route.webm -c:v libx264 -crf 18 -pix_fmt yuv420p route.mp4
 ```
 
 Best results: Chrome or Edge on desktop. Safari 16.4+ and Firefox 130+ also have WebCodecs.
+
+## Music
+
+Pick a soundtrack in the Music panel (MP4/WebM exports only — GIFs are silent). Two ways to get one in:
+
+- **Upload your own** — any audio file your browser can decode (MP3, WAV, M4A, OGG...). Nothing is uploaded anywhere; it's decoded and mixed entirely client-side.
+- **Library** — search [Wikimedia Commons](https://commons.wikimedia.org) for freely-licensed audio straight from the sidebar, or pick from a curated list if one's been added (see below). No API key, no backend: it's a plain keyless request to Commons' public search API, filtered to audio files, run from your browser when you hit Search.
+
+Commons is used instead of a bundled track list because every file there carries a real, checkable license in its description page (linked from each result) — the artist and license shown next to a result come straight from that metadata, not from guesswork. It's still worth reading the license on a track before publishing a video with it, especially for anything requiring attribution (most CC-BY tracks do); the result's name links to its Commons page for that.
+
+You can also pin your own vetted tracks so they show up without a search:
+
+1. Drop the audio file in `public/music/` (keep it small — it ships in every page load for anyone who opens the Library tab).
+2. Add an entry to `MUSIC_TRACKS` in `src/lib/presets.js`:
+   ```js
+   export const MUSIC_TRACKS = [
+     { id: 'my-track', name: 'Track Name', artist: 'Artist', license: 'CC0', url: '/music/my-track.mp3' },
+   ];
+   ```
+
+This list ships empty by default — bundling someone else's audio means their license is now your problem too, and that's not something to assume from a repo you didn't audit yourself. A site calling itself "free music" or "royalty-free" is not the same as public domain or CC0 — read the actual license before bundling a track this way, not just the site's marketing page.
+
+However long or short the track is, it's stretched or looped to match the video's exact length, with an optional fade-out so it doesn't cut off mid-note.
 
 ## Project layout
 
@@ -88,10 +112,11 @@ src/
   lib/
     animator.js           the engine: timeline, camera, layers
     exporter.js           frame-by-frame MP4, WebM, and GIF export
+    audio.js              decode, loop, trim, fade, and search Wikimedia Commons for a soundtrack
     recorder.js           overlay drawing and real-time fallback
     geo.js                distance, heading, interpolation
     vehicles.js           top-down vehicle SVGs
-    presets.js            map styles, templates, sample routes
+    presets.js            map styles, templates, sample routes, music library
     routing.js            routing, geocoding, and geolocation
     importers.js          GPX, KML, GeoJSON
 ```
@@ -106,6 +131,7 @@ src/
 | Satellite | Esri World Imagery | Check Esri's terms before commercial use |
 | Routing | routing.openstreetmap.de (OSRM) | Public demo server, fair-use only |
 | Search | Photon by Komoot | Public server, fair-use only. "Use my location" reads coordinates straight from the browser, no server round trip |
+| Music search | Wikimedia Commons | Free, keyless, only called when you search the Library tab |
 
 Fine for personal projects and videos. If you ship this to many users, self-host OSRM and Photon, or swap in Mapbox or Google in `lib/routing.js` and `lib/presets.js`.
 
@@ -116,4 +142,3 @@ Map attribution is drawn into every exported video and image. Keep it; the tile 
 - 3D terrain (MapLibre `setTerrain` with a DEM source) for mountain roads
 - Pause markers at stops with photos
 - Speed from GPX timestamps instead of constant speed
-- Music track muxed into the MP4

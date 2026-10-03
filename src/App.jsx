@@ -54,6 +54,7 @@ export default function App() {
   });
   const [toasts, setToasts] = useState([]);
   const toastId = useRef(0);
+  const [musicFile, setMusicFile] = useState(null);
   const stageRef = useRef(null);
 
   const showToast = useCallback((text) => {
@@ -331,6 +332,8 @@ export default function App() {
         routeOptions={routeOptions}
         routeChoice={routeChoice}
         chooseRoute={chooseRoute}
+        musicFile={musicFile}
+        onMusicFile={setMusicFile}
         onExportVideo={() => stageRef.current.exportVideo()}
         onExportFrame={() => stageRef.current.exportFrame()}
         onDownloadGPX={downloadGPX}
@@ -348,6 +351,7 @@ export default function App() {
         notify={showToast}
         onPick={onPick}
         fileName={fileName}
+        musicFile={musicFile}
       />
     </div>
   );
