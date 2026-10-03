@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { PlaceInput } from './PlaceInput';
 import { VEHICLES, vehicleDataURL } from '../lib/vehicles';
-import { MAP_STYLES, TEMPLATES, SAMPLE_ROUTES, SWATCHES, ASPECTS } from '../lib/presets';
+import { MAP_STYLES, TEMPLATES, SAMPLE_ROUTES, SWATCHES, ASPECTS, MUSIC_TRACKS } from '../lib/presets';
 import { formatDistance, formatDuration } from '../lib/geo';
 import { FORMATS, estimateSize, formatBytes } from '../lib/exporter';
 
@@ -15,7 +15,8 @@ function exportPlan(s) {
   const height = r >= 1 ? short : even(short / r);
   const follow = s.camera.mode === 'follow';
   const seconds = (follow ? 4.5 : 2.1) + s.duration + (gif ? 1 : 0.5);
-  return { width, height, fps, seconds, bytes: estimateSize(s.format, { width, height, fps, seconds }) };
+  const audio = !gif && s.music.source !== 'none';
+  return { width, height, fps, seconds, bytes: estimateSize(s.format, { width, height, fps, seconds, audio }) };
 }
 
 function Section({ title, children, open = true, tour }) {
@@ -91,10 +92,12 @@ export function Sidebar({
   followRoads, setFollowRoads, pickMode, setPickMode,
   buildRoute, loadSample, importFile, building, message, route,
   routeOptions, routeChoice, chooseRoute,
+  musicFile, onMusicFile,
   onExportVideo, onExportFrame, onDownloadGPX, onDownloadGeoJSON, onSaveProject, onOpenProject,
 }) {
   const fileRef = useRef(null);
   const projectRef = useRef(null);
+  const musicRef = useRef(null);
   const dragFrom = useRef(null);
   const [dragOver, setDragOver] = useState(null);
   const s = settings;
@@ -294,6 +297,55 @@ export function Sidebar({
         </label>
         <Toggle label="Distance counter" checked={s.hud.stats} onChange={(v) => set('hud.stats', v)} />
         <Segmented label="Units" value={s.hud.units} onChange={(v) => set('hud.units', v)} options={[{ value: 'km', label: 'Kilometres' }, { value: 'mi', label: 'Miles' }]} />
+      </Section>
+
+      <Section title="Music" tour="music">
+        {s.format === 'gif' && <p className="hint">GIF has no sound — pick MP4 or WebM to add music.</p>}
+        <Segmented
+          label="Music source"
+          value={s.music.source}
+          onChange={(v) => set('music.source', v)}
+          options={[{ value: 'none', label: 'None' }, { value: 'library', label: 'Library' }, { value: 'custom', label: 'Upload' }]}
+        />
+
+        {s.music.source === 'library' && (
+          MUSIC_TRACKS.length === 0 ? (
+            <p className="hint">No tracks added yet. See the README for how to add royalty-free music.</p>
+          ) : (
+            <div className="samples">
+              {MUSIC_TRACKS.map((t) => (
+                <button
+                  key={t.id}
+                  className={`chip ${s.music.trackId === t.id ? 'on' : ''}`}
+                  onClick={() => set('music.trackId', t.id)}
+                  title={t.license}
+                >
+                  {t.name}
+                </button>
+              ))}
+            </div>
+          )
+        )}
+
+        {s.music.source === 'custom' && (
+          <div className="btn-row">
+            <button className="btn ghost small grow" onClick={() => musicRef.current.click()}>
+              {musicFile ? musicFile.name : 'Choose audio file'}
+            </button>
+            {musicFile && (
+              <button className="icon-btn" onClick={() => onMusicFile(null)} aria-label="Remove audio file">×</button>
+            )}
+            <input ref={musicRef} type="file" hidden accept="audio/*" onChange={(e) => { onMusicFile(e.target.files[0] || null); e.target.value = ''; }} />
+          </div>
+        )}
+
+        {s.music.source !== 'none' && (
+          <>
+            <Slider label="Volume" value={s.music.volume} min={0} max={100} step={5} onChange={(v) => set('music.volume', v)} format={(v) => `${v}%`} />
+            <Toggle label="Loop to fill the video" checked={s.music.loop} onChange={(v) => set('music.loop', v)} />
+            <Toggle label="Fade out at the end" checked={s.music.fadeOut} onChange={(v) => set('music.fadeOut', v)} />
+          </>
+        )}
       </Section>
 
       <Section title="Export" tour="export">

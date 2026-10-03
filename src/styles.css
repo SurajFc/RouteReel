@@ -158,6 +158,7 @@ button, input, select { font: inherit; color: inherit; }
   cursor: pointer;
 }
 .chip:hover { border-color: var(--paint); }
+.chip.on { border-color: var(--paint); color: var(--paint); }
 .samples { display: flex; flex-wrap: wrap; gap: 6px; }
 
 /* waypoints */

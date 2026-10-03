@@ -1,4 +1,8 @@
-import { Output, Mp4OutputFormat, WebMOutputFormat, BufferTarget, CanvasSource, Quality, getFirstEncodableVideoCodec } from 'mediabunny';
+import {
+  Output, Mp4OutputFormat, WebMOutputFormat, BufferTarget,
+  CanvasSource, AudioBufferSource, Quality,
+  getFirstEncodableVideoCodec, getFirstEncodableAudioCodec,
+} from 'mediabunny';
 import { GIFEncoder, quantize, applyPalette } from 'gifenc';
 
 export const FORMATS = {
@@ -17,6 +21,22 @@ export async function videoCodecFor(format, width, height, fps) {
       width,
       height,
       bitrate: videoBitrate(format, width, height, fps),
+    });
+  } catch {
+    return null;
+  }
+}
+
+const AUDIO_BITRATE = 128_000;
+
+/** Returns the audio codec the browser can encode, or null (e.g. GIF has no audio track at all). */
+export async function audioCodecFor(format) {
+  if (format === 'gif' || typeof AudioEncoder === 'undefined') return null;
+  try {
+    return await getFirstEncodableAudioCodec(outputFormatFor(format).getSupportedAudioCodecs(), {
+      numberOfChannels: 2,
+      sampleRate: 48000,
+      bitrate: AUDIO_BITRATE,
     });
   } catch {
     return null;
@@ -68,13 +88,16 @@ function videoBitrate(format, width, height, fps) {
   return Math.round(width * height * fps * bppBase * scale);
 }
 
-export async function encodeVideo({ format, codec, width, height, fps, ...loop }) {
+export async function encodeVideo({ format, codec, width, height, fps, audioBuffer, audioCodec, ...loop }) {
   const output = new Output({ format: outputFormatFor(format), target: new BufferTarget() });
   const bitrate = videoBitrate(format, width, height, fps);
   const step = 1 / fps;
+  const withAudio = audioBuffer && audioCodec;
 
   // CanvasSource is built from the first frame so it reads from the actual
-  // canvas renderFrame draws into (same canvas reused every frame).
+  // canvas renderFrame draws into (same canvas reused every frame). The
+  // audio buffer is already rendered to exactly the export's duration, so
+  // it's added once as a single track rather than interleaved per frame.
   let videoSource = null;
   const finished = await eachFrame({ fps, holdSeconds: 0.5, ...loop }, async (canvas, i) => {
     if (!videoSource) {
@@ -84,7 +107,14 @@ export async function encodeVideo({ format, codec, width, height, fps, ...loop }
       // quality drop at these bitrates.
       videoSource = new CanvasSource(canvas, { codec, quality: new Quality({ bitrate }), latencyMode: 'realtime' });
       output.addVideoTrack(videoSource);
-      await output.start();
+      if (withAudio) {
+        const audioSource = new AudioBufferSource({ codec: audioCodec, quality: new Quality({ bitrate: AUDIO_BITRATE }) });
+        output.addAudioTrack(audioSource);
+        await output.start();
+        await audioSource.add(audioBuffer);
+      } else {
+        await output.start();
+      }
     }
     await videoSource.add(i * step, step, { keyFrame: i % (fps * 2) === 0 });
   });
@@ -120,9 +150,10 @@ export async function encodeGif({ width, height, fps, ...loop }) {
 }
 
 /** Rough output size so a 200 MB GIF isn't a surprise. */
-export function estimateSize(format, { width, height, fps, seconds }) {
+export function estimateSize(format, { width, height, fps, seconds, audio }) {
   if (format === 'gif') return width * height * fps * seconds * 0.35;
-  return (videoBitrate(format, width, height, fps) * seconds) / 8;
+  const audioBytes = audio ? (AUDIO_BITRATE * seconds) / 8 : 0;
+  return (videoBitrate(format, width, height, fps) * seconds) / 8 + audioBytes;
 }
 
 export function formatBytes(b) {
