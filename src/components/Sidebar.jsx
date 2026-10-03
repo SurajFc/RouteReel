@@ -381,18 +381,35 @@ export function Sidebar({
               <div className="track-results">
                 {musicResults.map((t) => (
                   <div key={t.id} className="track-result">
-                    <div className="track-result-info">
-                      <a className="track-result-name" href={t.pageUrl} target="_blank" rel="noreferrer" title="View on Wikimedia Commons">
-                        {t.name}
-                      </a>
-                      <span className="track-result-meta">{t.artist} · {t.license}</span>
+                    <div className="track-result-top">
+                      <div className="track-result-info">
+                        <span className="track-result-name">{t.name}</span>
+                        <span className="track-result-meta">
+                          {t.artist} · {t.license} ·{' '}
+                          <a href={t.pageUrl} target="_blank" rel="noreferrer" title="View license details on Wikimedia Commons">
+                            source
+                          </a>
+                        </span>
+                      </div>
+                      <button
+                        className={`btn ghost small ${s.music.trackId === t.id ? 'active' : ''}`}
+                        onClick={() => selectTrack(t)}
+                      >
+                        {s.music.trackId === t.id ? 'Selected' : 'Use'}
+                      </button>
                     </div>
-                    <button
-                      className={`btn ghost small ${s.music.trackId === t.id ? 'active' : ''}`}
-                      onClick={() => selectTrack(t)}
-                    >
-                      {s.music.trackId === t.id ? 'Selected' : 'Use'}
-                    </button>
+                    <audio
+                      className="track-result-audio"
+                      controls
+                      preload="none"
+                      src={t.url}
+                      onPlay={(e) => {
+                        const container = e.currentTarget.closest('.track-results');
+                        container?.querySelectorAll('audio').forEach((el) => {
+                          if (el !== e.currentTarget) el.pause();
+                        });
+                      }}
+                    />
                   </div>
                 ))}
               </div>
