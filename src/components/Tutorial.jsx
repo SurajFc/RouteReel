@@ -46,10 +46,19 @@ const STEPS = [
     body: 'Add a title card and a live distance counter to the video.',
   },
   {
+    title: 'Music',
+    target: '[data-tour="music"]',
+    items: [
+      'Upload your own audio file, or search Wikimedia Commons for freely-licensed tracks — no account needed.',
+      'Preview a track right in the panel before picking it; each result shows its artist and license.',
+      'Volume, loop-to-fill, and fade-out shape it to your video\'s exact length. MP4/WebM only — GIFs stay silent.',
+    ],
+  },
+  {
     title: 'Export your reel',
     target: '[data-tour="export"]',
     items: [
-      'Pick a format (MP4, WebM, or GIF) and a frame size, then hit Export.',
+      'Pick a format (MP4, WebM, or GIF) and a frame size — each aspect ratio shows which platforms it fits (YouTube, Instagram, TikTok, and more) — then hit Export.',
       'Grab a still frame (PNG), or the route as GPX or GeoJSON.',
       'Save the whole project to reopen and keep editing later.',
     ],
