@@ -42,10 +42,10 @@ export const MAP_STYLES = {
 };
 
 export const ASPECTS = {
-  '16:9': { label: '16:9', hint: 'YouTube', ratio: 16 / 9 },
-  '9:16': { label: '9:16', hint: 'Shorts, Reels', ratio: 9 / 16 },
-  '1:1': { label: '1:1', hint: 'Square', ratio: 1 },
-  '4:5': { label: '4:5', hint: 'Instagram', ratio: 4 / 5 },
+  '16:9': { label: '16:9', hint: 'YouTube, Facebook, websites', ratio: 16 / 9 },
+  '9:16': { label: '9:16', hint: 'Instagram & YouTube Shorts, Reels, TikTok, Snapchat', ratio: 9 / 16 },
+  '1:1': { label: '1:1', hint: 'Instagram & Facebook feed, Twitter/X', ratio: 1 },
+  '4:5': { label: '4:5', hint: 'Instagram & Facebook feed (portrait)', ratio: 4 / 5 },
 };
 
 // Ships empty on purpose: bundling someone else's audio needs its actual
