@@ -10,9 +10,9 @@ Runs entirely in the browser. No API keys, no backend.
 - **Route alternatives**: when OSRM finds more than one road option between a start and destination, they're listed as chips (distance + time) so you can pick between them.
 - **Templates**: Cinematic 3D, Night ride, Travel vlog (satellite), Clean top-down, Road trip map. A template changes the look and camera, never your route or title.
 - **Vehicles**: motorbike, car, bicycle, truck, or a dot. Any color, any size. They turn with the road.
-- **Maps**: 3D streets with buildings, bright, light, dark, satellite.
+- **Maps**: 3D streets with buildings, bright, light, dark, satellite, or **Poster** — no real map at all, just the route and vehicle over a solid color or a photo you upload, for a minimalist route-art look.
 - **Camera**: chase cam with zoom, tilt and road-following rotation, or a fixed whole-route view. Drive time (5 to 120 seconds) is set automatically from the route's length each time you build one — short trips play quickly, long ones get more time, with diminishing returns so it never drags — and you can still fine-tune it by hand. Optional ease in and out. The camera fits tightly to the route, and an optional "Focus route" toggle dims the map so the trail and vehicle stay the visual focus.
-- **Overlay**: title card and a live distance counter (km or miles).
+- **Overlay**: title card, a live distance counter (km or miles), average speed (from the route's estimated travel time — needs "Follow roads" on), a climbing elevation profile with total gain, and an end-of-video summary card recapping distance, time, speed, and elevation. All optional.
 - **Music**: upload your own audio file as a soundtrack, or search Wikimedia Commons for freely-licensed tracks right from the sidebar — no API key, no account. Volume, loop-to-fill, and fade-out controls either way. See [Music](#music) below. MP4/WebM only; GIFs have no sound.
 - **Interface**: light/dark theme (remembered across visits), a first-time tutorial (reopen anytime from the "?" button), and an About panel with credits, version, and license.
 - **Export formats**:
@@ -132,6 +132,7 @@ src/
 | Routing | routing.openstreetmap.de (OSRM) | Public demo server, fair-use only |
 | Search | Photon by Komoot | Public server, fair-use only. "Use my location" reads coordinates straight from the browser, no server round trip |
 | Music search | Wikimedia Commons | Free, keyless, only called when you search the Library tab |
+| Elevation | Open Topo Data (SRTM 90m) | Free, keyless, CORS-enabled public server. Only called when a route is built; a route still works fine if it's unreachable, just without an elevation profile or gain stat |
 
 Fine for personal projects and videos. If you ship this to many users, self-host OSRM and Photon, or swap in Mapbox or Google in `lib/routing.js` and `lib/presets.js`.
 

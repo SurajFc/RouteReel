@@ -94,11 +94,13 @@ export function Sidebar({
   buildRoute, loadSample, importFile, importGoogleMapsLink, building, message, route,
   routeOptions, routeChoice, chooseRoute,
   musicFile, onMusicFile,
+  posterImage, onPosterImage,
   onExportVideo, onExportFrame, onDownloadGPX, onDownloadGeoJSON, onSaveProject, onOpenProject,
 }) {
   const fileRef = useRef(null);
   const projectRef = useRef(null);
   const musicRef = useRef(null);
+  const posterRef = useRef(null);
   const dragFrom = useRef(null);
   const [dragOver, setDragOver] = useState(null);
   const [mapsLink, setMapsLink] = useState('');
@@ -315,6 +317,29 @@ export function Sidebar({
           onChange={(v) => set('mapStyle', v)}
           options={Object.entries(MAP_STYLES).map(([value, m]) => ({ value, label: m.label }))}
         />
+        {s.mapStyle === 'poster' && (
+          <>
+            <p className="hint">No real map — just your route and vehicle over a background you pick, like a route-art poster.</p>
+            <Segmented
+              label="Background"
+              value={s.poster.bg}
+              onChange={(v) => set('poster.bg', v)}
+              options={[{ value: 'color', label: 'Solid color' }, { value: 'image', label: 'Your image' }]}
+            />
+            {s.poster.bg === 'color' && <ColorPick label="Background color" value={s.poster.color} onChange={(v) => set('poster.color', v)} />}
+            {s.poster.bg === 'image' && (
+              <div className="btn-row">
+                <button className="btn ghost small grow" onClick={() => posterRef.current.click()}>
+                  {posterImage ? posterImage.name : 'Choose image'}
+                </button>
+                {posterImage && (
+                  <button className="icon-btn" onClick={() => onPosterImage(null)} aria-label="Remove background image">×</button>
+                )}
+                <input ref={posterRef} type="file" hidden accept="image/*" onChange={(e) => { onPosterImage(e.target.files[0] || null); e.target.value = ''; }} />
+              </div>
+            )}
+          </>
+        )}
       </Section>
 
       <Section title="Vehicle" tour="vehicle">
@@ -364,6 +389,12 @@ export function Sidebar({
         </label>
         <Toggle label="Distance counter" checked={s.hud.stats} onChange={(v) => set('hud.stats', v)} />
         <Segmented label="Units" value={s.hud.units} onChange={(v) => set('hud.units', v)} options={[{ value: 'km', label: 'Kilometres' }, { value: 'mi', label: 'Miles' }]} />
+        <Toggle label="Avg. speed" checked={s.hud.speed} onChange={(v) => set('hud.speed', v)} />
+        {!route?.travelSeconds && s.hud.speed && (
+          <p className="hint">Only shows with "Follow roads" on — straight lines have no real-world travel time to estimate from.</p>
+        )}
+        <Toggle label="Elevation profile" checked={s.hud.elevation} onChange={(v) => set('hud.elevation', v)} />
+        <Toggle label="End-of-video summary card" checked={s.hud.summary} onChange={(v) => set('hud.summary', v)} />
       </Section>
 
       <Section title="Music" tour="music">

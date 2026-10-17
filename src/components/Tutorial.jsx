@@ -24,7 +24,10 @@ const STEPS = [
   {
     title: 'Map style',
     target: '[data-tour="map"]',
-    body: 'Switch between 3D streets, bright, light, dark, and satellite.',
+    items: [
+      'Switch between 3D streets, bright, light, dark, and satellite.',
+      '"Poster" drops the real map entirely — just your route and vehicle over a solid color or your own uploaded photo, like route-art.',
+    ],
   },
   {
     title: 'Vehicle',
@@ -44,7 +47,10 @@ const STEPS = [
   {
     title: 'Overlay',
     target: '[data-tour="overlay"]',
-    body: 'Add a title card and a live distance counter to the video.',
+    items: [
+      'Add a title card and a live distance counter to the video.',
+      'Turn on avg. speed, an elevation profile (climbing chart + total gain), or an end-of-video summary card — Strava-style stats for the route you built.',
+    ],
   },
   {
     title: 'Music',

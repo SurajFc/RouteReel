@@ -39,6 +39,15 @@ export const MAP_STYLES = {
     },
     attribution: 'Imagery © Esri, Maxar, Earthstar Geographics',
   },
+  // No tiles at all: an empty style, so only the route/vehicle layers paint
+  // onto an otherwise transparent map canvas. Stage.jsx fills whatever's
+  // behind it (a solid color or an uploaded image) into that transparency,
+  // for a minimalist route-art poster instead of a real map.
+  poster: {
+    label: 'Poster',
+    style: { version: 8, sources: {}, layers: [] },
+    attribution: '',
+  },
 };
 
 export const ASPECTS = {
@@ -65,7 +74,8 @@ export const DEFAULT_SETTINGS = {
   camera: { mode: 'follow', zoom: 16, pitch: 60, rotate: true },
   duration: 20,
   easing: true,
-  hud: { show: true, title: '', stats: true, units: 'km' },
+  hud: { show: true, title: '', stats: true, units: 'km', speed: false, elevation: false, summary: false },
+  poster: { bg: 'color', color: '#141821' },
   music: {
     source: 'none',
     trackId: null,
