@@ -5,7 +5,8 @@ import { Tutorial } from './components/Tutorial';
 import { About } from './components/About';
 import { Toasts } from './components/Toasts';
 import { DEFAULT_SETTINGS, SAMPLE_ROUTES, mergeSettings } from './lib/presets';
-import { fetchRoute } from './lib/routing';
+import { fetchRoute, geocode, parseGoogleMapsLink } from './lib/routing';
+import { fetchElevationProfile } from './lib/elevation';
 import { buildTrack, autoDriveTime } from './lib/geo';
 import { parseRouteFile, toGPX, downloadBlob, slug } from './lib/importers';
 
@@ -55,7 +56,25 @@ export default function App() {
   const [toasts, setToasts] = useState([]);
   const toastId = useRef(0);
   const [musicFile, setMusicFile] = useState(null);
+  const [posterImage, setPosterImage] = useState(null);
+  const [elevation, setElevation] = useState(null);
   const stageRef = useRef(null);
+
+  // Runs for every route-setting path (build, sample, alternative, file
+  // import, Google Maps link, reopened project) since they all funnel into
+  // this one state. Best-effort: a route still works with no elevation.
+  useEffect(() => {
+    if (!route?.coords || route.coords.length < 2) {
+      setElevation(null);
+      return;
+    }
+    const controller = new AbortController();
+    setElevation(null);
+    fetchElevationProfile(route.coords, controller.signal)
+      .then((profile) => setElevation(profile))
+      .catch(() => {});
+    return () => controller.abort();
+  }, [route?.coords]);
 
   const showToast = useCallback((text) => {
     const id = ++toastId.current;
@@ -125,18 +144,20 @@ export default function App() {
       setMessage(null);
       try {
         const name = `${short(pts[0].label)} to ${short(pts[pts.length - 1].label)}`;
-        let coords, options;
+        let coords, options, travelSeconds;
         if (roads) {
           const result = await fetchRoute(pts.map((p) => p.coord), settings.vehicle.type);
           options = result.routes;
           coords = options[0].coords;
+          travelSeconds = options[0].duration;
         } else {
           coords = pts.map((p) => p.coord);
           options = [];
+          travelSeconds = null;
         }
         setRouteOptions(options);
         setRouteChoice(0);
-        setRoute({ name, coords });
+        setRoute({ name, coords, travelSeconds });
         const duration = autoDriveTime(buildTrack(coords).total);
         setSettings((s) => ({
           ...s,
@@ -156,7 +177,7 @@ export default function App() {
     const opt = routeOptions[i];
     if (!opt) return;
     setRouteChoice(i);
-    setRoute((r) => ({ ...r, coords: opt.coords }));
+    setRoute((r) => ({ ...r, coords: opt.coords, travelSeconds: opt.duration }));
     setSettings((s) => ({ ...s, duration: autoDriveTime(opt.distance) }));
   };
 
@@ -213,6 +234,46 @@ export default function App() {
         : [...waypoints, wp(label, coord)];
     setWaypoints(next);
     if (next.filter((w) => w.coord).length >= 2) buildRoute(next);
+  };
+
+  const importGoogleMapsLink = async (text) => {
+    const parsed = parseGoogleMapsLink(text);
+    if (parsed.type === 'short') {
+      setMessage({
+        kind: 'error',
+        text: "That's a shortened link (maps.app.goo.gl) — open it once in your browser, then paste the full address-bar URL here instead.",
+      });
+      return;
+    }
+    if (parsed.type !== 'points') {
+      setMessage({
+        kind: 'error',
+        text: "Couldn't find a route in that link — paste a Google Maps directions link (start to destination), not a single place.",
+      });
+      return;
+    }
+
+    setMessage({ kind: 'info', text: 'Resolving places from the link…' });
+    const resolved = await Promise.all(
+      parsed.points.map(async (p) => {
+        if (p.coord) return wp(p.label, p.coord);
+        try {
+          const matches = await geocode(p.label);
+          return matches[0] ? wp(matches[0].label, matches[0].coord) : wp(p.label, null);
+        } catch {
+          return wp(p.label, null);
+        }
+      })
+    );
+
+    setWaypoints(resolved);
+    setRouteOptions([]);
+    setRouteChoice(0);
+    await buildRoute(resolved);
+    const unresolved = resolved.filter((w) => !w.coord).length;
+    if (unresolved > 0) {
+      setMessage({ kind: 'error', text: `Couldn't locate ${unresolved} of ${resolved.length} stops — check and fix those fields.` });
+    }
   };
 
   const importFile = async (file) => {
@@ -326,6 +387,7 @@ export default function App() {
         buildRoute={buildRoute}
         loadSample={loadSample}
         importFile={importFile}
+        importGoogleMapsLink={importGoogleMapsLink}
         building={building}
         message={message}
         route={routeInfo}
@@ -334,6 +396,8 @@ export default function App() {
         chooseRoute={chooseRoute}
         musicFile={musicFile}
         onMusicFile={setMusicFile}
+        posterImage={posterImage}
+        onPosterImage={setPosterImage}
         onExportVideo={() => stageRef.current.exportVideo()}
         onExportFrame={() => stageRef.current.exportFrame()}
         onDownloadGPX={downloadGPX}
@@ -352,6 +416,8 @@ export default function App() {
         onPick={onPick}
         fileName={fileName}
         musicFile={musicFile}
+        posterImage={posterImage}
+        routeMeta={{ travelSeconds: route?.travelSeconds ?? null, elevation }}
       />
     </div>
   );

@@ -114,6 +114,16 @@ export function formatDuration(s) {
   return m ? `${h}h ${m}m` : `${h}h`;
 }
 
+export function formatSpeed(metersPerSecond, units = 'km') {
+  if (units === 'mi') return `${Math.round(metersPerSecond * 2.236936)} mph`;
+  return `${Math.round(metersPerSecond * 3.6)} km/h`;
+}
+
+export function formatElevation(m, units = 'km') {
+  if (units === 'mi') return `${Math.round(m * 3.28084)} ft`;
+  return `${Math.round(m)} m`;
+}
+
 export function formatTime(s) {
   s = Math.max(0, s);
   const m = Math.floor(s / 60);

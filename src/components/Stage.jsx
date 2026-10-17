@@ -3,7 +3,7 @@ import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { RouteAnimator } from '../lib/animator';
 import { MAP_STYLES, ASPECTS } from '../lib/presets';
-import { drawHud, startRecording } from '../lib/recorder';
+import { drawHud, drawPosterBackground, startRecording } from '../lib/recorder';
 import { FORMATS, encodeGif, encodeVideo, videoCodecFor, audioCodecFor, waitForMap } from '../lib/exporter';
 import { decodeAudioFile, decodeAudioUrl, fitAudioToDuration } from '../lib/audio';
 import { formatTime } from '../lib/geo';
@@ -11,9 +11,10 @@ import { downloadBlob, slug } from '../lib/importers';
 
 const styleOf = (key) => (MAP_STYLES[key] || MAP_STYLES.streets).style;
 
-export const Stage = forwardRef(function Stage({ settings, coords, waypoints, pickMode, onPick, fileName, notify, musicFile }, ref) {
+export const Stage = forwardRef(function Stage({ settings, coords, waypoints, pickMode, onPick, fileName, notify, musicFile, posterImage, routeMeta }, ref) {
   const bodyRef = useRef(null);
   const mapEl = useRef(null);
+  const bgRef = useRef(null);
   const overlayRef = useRef(null);
   const mapRef = useRef(null);
   const animRef = useRef(null);
@@ -24,6 +25,8 @@ export const Stage = forwardRef(function Stage({ settings, coords, waypoints, pi
   const cancelRef = useRef(false);
   const pickRef = useRef({ pickMode, onPick });
   const lastUiRef = useRef(0);
+  const routeMetaRef = useRef(routeMeta);
+  const posterImgRef = useRef(null);
 
   const [ui, setUi] = useState({ t: 0, total: 0, playing: false });
   const [size, setSize] = useState({ w: 0, h: 0 });
@@ -31,10 +34,12 @@ export const Stage = forwardRef(function Stage({ settings, coords, waypoints, pi
 
   settingsRef.current = settings;
   pickRef.current = { pickMode, onPick };
+  routeMetaRef.current = routeMeta;
 
   const drawOverlay = useCallback(() => {
     const map = mapRef.current;
     const cv = overlayRef.current;
+    const bg = bgRef.current;
     if (!map || !cv) return;
     const mc = map.getCanvas();
     if (cv.width !== mc.width || cv.height !== mc.height) {
@@ -42,8 +47,32 @@ export const Stage = forwardRef(function Stage({ settings, coords, waypoints, pi
       cv.height = mc.height;
     }
     const s = settingsRef.current;
-    drawHud(cv.getContext('2d'), frameRef.current, s, (MAP_STYLES[s.mapStyle] || MAP_STYLES.streets).attribution);
+    drawHud(cv.getContext('2d'), frameRef.current, s, (MAP_STYLES[s.mapStyle] || MAP_STYLES.streets).attribution, routeMetaRef.current);
+    if (bg) {
+      if (bg.width !== mc.width || bg.height !== mc.height) {
+        bg.width = mc.width;
+        bg.height = mc.height;
+      }
+      drawPosterBackground(bg.getContext('2d'), bg.width, bg.height, s, posterImgRef.current);
+    }
   }, []);
+
+  // Load the uploaded poster background image once and redraw when it's ready
+  useEffect(() => {
+    posterImgRef.current = null;
+    if (!posterImage) {
+      drawOverlay();
+      return;
+    }
+    const url = URL.createObjectURL(posterImage);
+    const img = new Image();
+    img.onload = () => {
+      posterImgRef.current = img;
+      drawOverlay();
+    };
+    img.src = url;
+    return () => URL.revokeObjectURL(url);
+  }, [posterImage, drawOverlay]);
 
   // ---------- init ----------
   useEffect(() => {
@@ -199,6 +228,7 @@ export const Stage = forwardRef(function Stage({ settings, coords, waypoints, pi
     const ctx = comp.getContext('2d');
     const compose = () => {
       drawOverlay();
+      ctx.drawImage(bgRef.current, 0, 0, W, H);
       ctx.drawImage(map.getCanvas(), 0, 0, W, H);
       ctx.drawImage(overlayRef.current, 0, 0, W, H);
       return comp;
@@ -333,6 +363,7 @@ export const Stage = forwardRef(function Stage({ settings, coords, waypoints, pi
     <section className={`stage ${ui.playing || exporting ? 'is-playing' : ''} ${pickMode ? 'is-picking' : ''}`}>
       <div className="stage-body" ref={bodyRef}>
         <div className="frame" style={{ width: size.w, height: size.h }}>
+          <canvas ref={bgRef} className="map-bg" />
           <div ref={mapEl} className="map" />
           <canvas ref={overlayRef} className="overlay" />
           {pickMode && <div className="pick-hint">Click the map to add points</div>}

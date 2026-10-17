@@ -11,6 +11,7 @@ const STEPS = [
     items: [
       'Search a place in the Start/Destination fields, or tap "Pick on map" and click the map to drop points.',
       'Tap the target icon in a field to use your current location.',
+      'Already planned the trip in Google Maps? Paste its directions link (Start to destination, with any stops) to fill every field at once.',
       '"Add stop" adds a waypoint, "Reverse" flips the direction.',
       'Toggle "Follow roads" for real streets, or off for a straight line. When more than one road option comes back, pick between them below the fields.',
     ],
@@ -23,7 +24,10 @@ const STEPS = [
   {
     title: 'Map style',
     target: '[data-tour="map"]',
-    body: 'Switch between 3D streets, bright, light, dark, and satellite.',
+    items: [
+      'Switch between 3D streets, bright, light, dark, and satellite.',
+      '"Poster" drops the real map entirely — just your route and vehicle over a solid color or your own uploaded photo, like route-art.',
+    ],
   },
   {
     title: 'Vehicle',
@@ -43,7 +47,10 @@ const STEPS = [
   {
     title: 'Overlay',
     target: '[data-tour="overlay"]',
-    body: 'Add a title card and a live distance counter to the video.',
+    items: [
+      'Add a title card and a live distance counter to the video.',
+      'Turn on avg. speed, an elevation profile (climbing chart + total gain), or an end-of-video summary card — Strava-style stats for the route you built.',
+    ],
   },
   {
     title: 'Music',
