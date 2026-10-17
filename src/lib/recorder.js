@@ -56,7 +56,7 @@ function roundRect(ctx, x, y, w, h, r) {
 // no traffic, no stops, no slowing for mountain switchbacks. Real trips
 // run slower than that, so the displayed average is derated rather than
 // shown at face value.
-const REALISTIC_SPEED_FACTOR = 0.75;
+const REALISTIC_SPEED_FACTOR = 0.7;
 
 function avgSpeed(routeMeta, routeLength) {
   if (!routeMeta?.travelSeconds) return null;
