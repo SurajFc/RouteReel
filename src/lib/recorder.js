@@ -52,9 +52,15 @@ function roundRect(ctx, x, y, w, h, r) {
   ctx.closePath();
 }
 
+// OSRM's duration assumes free-flow driving at the road's posted speed —
+// no traffic, no stops, no slowing for mountain switchbacks. Real trips
+// run slower than that, so the displayed average is derated rather than
+// shown at face value.
+const REALISTIC_SPEED_FACTOR = 0.7;
+
 function avgSpeed(routeMeta, routeLength) {
   if (!routeMeta?.travelSeconds) return null;
-  return routeLength / routeMeta.travelSeconds;
+  return (routeLength / routeMeta.travelSeconds) * REALISTIC_SPEED_FACTOR;
 }
 
 function drawElevationChart(ctx, W, H, u, frame, elevation, lineColor) {
