@@ -11,6 +11,7 @@ const STEPS = [
     items: [
       'Search a place in the Start/Destination fields, or tap "Pick on map" and click the map to drop points.',
       'Tap the target icon in a field to use your current location.',
+      'Already planned the trip in Google Maps? Paste its directions link (Start to destination, with any stops) to fill every field at once.',
       '"Add stop" adds a waypoint, "Reverse" flips the direction.',
       'Toggle "Follow roads" for real streets, or off for a straight line. When more than one road option comes back, pick between them below the fields.',
     ],

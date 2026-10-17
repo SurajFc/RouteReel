@@ -5,7 +5,7 @@ import { Tutorial } from './components/Tutorial';
 import { About } from './components/About';
 import { Toasts } from './components/Toasts';
 import { DEFAULT_SETTINGS, SAMPLE_ROUTES, mergeSettings } from './lib/presets';
-import { fetchRoute } from './lib/routing';
+import { fetchRoute, geocode, parseGoogleMapsLink } from './lib/routing';
 import { buildTrack, autoDriveTime } from './lib/geo';
 import { parseRouteFile, toGPX, downloadBlob, slug } from './lib/importers';
 
@@ -215,6 +215,46 @@ export default function App() {
     if (next.filter((w) => w.coord).length >= 2) buildRoute(next);
   };
 
+  const importGoogleMapsLink = async (text) => {
+    const parsed = parseGoogleMapsLink(text);
+    if (parsed.type === 'short') {
+      setMessage({
+        kind: 'error',
+        text: "That's a shortened link (maps.app.goo.gl) — open it once in your browser, then paste the full address-bar URL here instead.",
+      });
+      return;
+    }
+    if (parsed.type !== 'points') {
+      setMessage({
+        kind: 'error',
+        text: "Couldn't find a route in that link — paste a Google Maps directions link (start to destination), not a single place.",
+      });
+      return;
+    }
+
+    setMessage({ kind: 'info', text: 'Resolving places from the link…' });
+    const resolved = await Promise.all(
+      parsed.points.map(async (p) => {
+        if (p.coord) return wp(p.label, p.coord);
+        try {
+          const matches = await geocode(p.label);
+          return matches[0] ? wp(matches[0].label, matches[0].coord) : wp(p.label, null);
+        } catch {
+          return wp(p.label, null);
+        }
+      })
+    );
+
+    setWaypoints(resolved);
+    setRouteOptions([]);
+    setRouteChoice(0);
+    await buildRoute(resolved);
+    const unresolved = resolved.filter((w) => !w.coord).length;
+    if (unresolved > 0) {
+      setMessage({ kind: 'error', text: `Couldn't locate ${unresolved} of ${resolved.length} stops — check and fix those fields.` });
+    }
+  };
+
   const importFile = async (file) => {
     if (!file) return;
     try {
@@ -326,6 +366,7 @@ export default function App() {
         buildRoute={buildRoute}
         loadSample={loadSample}
         importFile={importFile}
+        importGoogleMapsLink={importGoogleMapsLink}
         building={building}
         message={message}
         route={routeInfo}

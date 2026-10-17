@@ -91,7 +91,7 @@ export function Sidebar({
   settings, set, applyTemplate,
   waypoints, setWaypoint, addStop, removeStop, reverse, moveWaypoint,
   followRoads, setFollowRoads, pickMode, setPickMode,
-  buildRoute, loadSample, importFile, building, message, route,
+  buildRoute, loadSample, importFile, importGoogleMapsLink, building, message, route,
   routeOptions, routeChoice, chooseRoute,
   musicFile, onMusicFile,
   onExportVideo, onExportFrame, onDownloadGPX, onDownloadGeoJSON, onSaveProject, onOpenProject,
@@ -101,12 +101,26 @@ export function Sidebar({
   const musicRef = useRef(null);
   const dragFrom = useRef(null);
   const [dragOver, setDragOver] = useState(null);
+  const [mapsLink, setMapsLink] = useState('');
+  const [importingLink, setImportingLink] = useState(false);
   const [musicQuery, setMusicQuery] = useState('');
   const [musicResults, setMusicResults] = useState([]);
   const [musicSearching, setMusicSearching] = useState(false);
   const [musicSearchError, setMusicSearchError] = useState(null);
   const s = settings;
   const follow = s.camera.mode === 'follow';
+
+  async function handleImportLink() {
+    const text = mapsLink.trim();
+    if (!text) return;
+    setImportingLink(true);
+    try {
+      await importGoogleMapsLink(text);
+      setMapsLink('');
+    } finally {
+      setImportingLink(false);
+    }
+  }
 
   function selectTrack(t) {
     set('music.trackId', t.id);
@@ -213,6 +227,29 @@ export function Sidebar({
             )}
           </div>
         )}
+
+        <div className="btn-row">
+          <label className="field grow">
+            <input
+              type="text"
+              value={mapsLink}
+              onChange={(e) => setMapsLink(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleImportLink();
+                }
+              }}
+              placeholder="Paste a Google Maps route link"
+            />
+          </label>
+          <button className="btn ghost small" onClick={handleImportLink} disabled={importingLink || !mapsLink.trim()}>
+            {importingLink ? 'Importing…' : 'Import link'}
+          </button>
+        </div>
+        <p className="hint">
+          Full directions links only (Start to destination, with any stops) — a shortened maps.app.goo.gl link needs opening once first to get the full one.
+        </p>
 
         <div className="btn-row">
           <button className="btn ghost small" onClick={addStop}>Add stop</button>

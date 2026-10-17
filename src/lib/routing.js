@@ -39,6 +39,70 @@ export async function geocode(query, signal) {
   });
 }
 
+const SHORT_LINK_RE = /^(https?:\/\/)?(maps\.app\.goo\.gl|goo\.gl\/maps|g\.co\/kgs)\//i;
+
+function parsePoint(text) {
+  const trimmed = text.trim();
+  const m = trimmed.match(/^(-?\d{1,3}(?:\.\d+)?)\s*,\s*(-?\d{1,3}(?:\.\d+)?)$/);
+  if (m) return { label: trimmed, coord: [parseFloat(m[2]), parseFloat(m[1])] };
+  return { label: trimmed, coord: null };
+}
+
+function decodePathSegment(seg) {
+  try {
+    return decodeURIComponent(seg.replace(/\+/g, ' '));
+  } catch {
+    return seg.replace(/\+/g, ' ');
+  }
+}
+
+/**
+ * Reads a route (start-to-finish, with any stops) out of a Google Maps
+ * link, without any network request — it's pure string parsing of the
+ * URL. Two link shapes are recognized: the modern
+ * `/maps/dir/<point>/<point>/.../@lat,lng,z` form, and the older
+ * `?saddr=<point>&daddr=<point>+to:<point>+to:...` form some share flows
+ * still produce. A shortened link (maps.app.goo.gl, goo.gl/maps) can't be
+ * expanded from the browser — Google's redirect sends no CORS headers —
+ * so that's reported separately rather than silently failing.
+ */
+export function parseGoogleMapsLink(input) {
+  const text = (input || '').trim();
+  if (!text) return { type: 'empty' };
+  if (SHORT_LINK_RE.test(text)) return { type: 'short' };
+
+  let url;
+  try {
+    url = new URL(text);
+  } catch {
+    return { type: 'invalid' };
+  }
+  if (!/\bgoogle\.[a-z.]+$/i.test(url.hostname) || !url.pathname.startsWith('/maps')) {
+    return { type: 'invalid' };
+  }
+
+  const dirMatch = url.pathname.match(/\/maps\/dir\/([^@]+)/);
+  if (dirMatch) {
+    const points = dirMatch[1]
+      .split('/')
+      .filter(Boolean)
+      .map(decodePathSegment)
+      .map(parsePoint);
+    if (points.length >= 2) return { type: 'points', points };
+  }
+
+  const saddr = url.searchParams.get('saddr');
+  const daddr = url.searchParams.get('daddr');
+  if (saddr || daddr) {
+    const points = [];
+    if (saddr) points.push(parsePoint(saddr));
+    if (daddr) points.push(...daddr.split(/\s+to:\s*/).map(parsePoint));
+    if (points.length >= 2) return { type: 'points', points };
+  }
+
+  return { type: 'unsupported' };
+}
+
 export function locateMe() {
   return new Promise((resolve, reject) => {
     if (!navigator.geolocation) {
